@@ -144,7 +144,7 @@ build_docker() {
     
     print_status "Building Docker image..."
     
-    BASE_IMAGE_NAME="norohim/pro-mata-frontend"
+    BASE_IMAGE_NAME="experimentanaturalmente/pro-mata-frontend"
     IMAGE_TAG="${ENVIRONMENT}-$(date +%Y%m%d-%H%M%S)"
     
     if [ "$ENVIRONMENT" = "production" ]; then
