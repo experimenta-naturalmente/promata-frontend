@@ -21,6 +21,7 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    environment: Produção
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -89,6 +90,7 @@ jobs:
 
   security-scan:
     runs-on: ubuntu-latest
+    environment: Produção
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -125,6 +127,7 @@ jobs:
     needs: [test, security-scan]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment: Produção
     env:
       AWS_REGION: ${{ vars.AWS_REGION || 'us-east-2' }}
     steps:
