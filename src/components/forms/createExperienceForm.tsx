@@ -32,7 +32,10 @@ import {
   Mountain,
   Upload,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import Cropper from "react-easy-crop";
+import Modal from "@/components/ui/modal";
+import getCroppedImg from "@/utils/cropImage";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useCreateExperience, useLoadImage } from "@/hooks";
@@ -153,6 +156,11 @@ export function CreateExperience() {
   const { mutate } = useCreateExperience();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { data: previewLoaded, isLoading: previewLoading } = useLoadImage(imagePreview || "");
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [priceDisplay, setPriceDisplay] = useState<string>("");
   const navigate = useNavigate();
 
@@ -222,30 +230,32 @@ export function CreateExperience() {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-
     if (file) {
       if (!file.type.startsWith("image/")) {
         appToast.error("Por favor, selecione apenas arquivos de imagem.");
-
         return;
       }
-
-      if (file.size > 10 * 1024 * 1024) {
-        appToast.error("Arquivo muito grande. Tamanho máximo: 10MB.");
-
-        return;
-      }
-
-      form.setValue("experienceImage", file);
-
+      setSelectedImage(file);
       const reader = new FileReader();
-
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
+      reader.onload = (ev) => {
+        setImagePreview(ev.target?.result as string);
+        setCropModalOpen(true);
       };
       reader.readAsDataURL(file);
     }
   };
+
+  const onCropComplete = useCallback((_, croppedPixels) => {
+    setCroppedAreaPixels(croppedPixels);
+  }, []);
+
+  const handleCropSave = useCallback(async () => {
+    if (!imagePreview || !croppedAreaPixels || !selectedImage) return;
+    const croppedFile = await getCroppedImg(imagePreview, croppedAreaPixels, 400, 200);
+    form.setValue("experienceImage", croppedFile);
+    setImagePreview(URL.createObjectURL(croppedFile));
+    setCropModalOpen(false);
+  }, [imagePreview, croppedAreaPixels, selectedImage, form]);
 
   const submitForm = form.handleSubmit((data) => {
     const payload: CreateExperiencePayload = {
@@ -303,13 +313,8 @@ export function CreateExperience() {
                         <img
                           src={imagePreview}
                           alt="Preview"
-                          className={`max-w-full max-h-48 object-cover rounded-lg transition-opacity duration-300 ${
-                            previewLoaded && !previewLoading ? "opacity-100" : "opacity-0"
-                          }`}
+                          className="max-w-full max-h-48 object-cover rounded-lg transition-opacity duration-300"
                         />
-                        {previewLoading && (
-                          <div className="absolute inset-0 animate-pulse bg-muted rounded-lg" />
-                        )}
                       </div>
                     ) : (
                       <>
@@ -320,9 +325,33 @@ export function CreateExperience() {
                       </>
                     )}
                   </label>
+                  <Modal open={cropModalOpen} onOpenChange={setCropModalOpen} title="Cortar imagem">
+                    <div style={{ position: "relative", width: 400, height: 200, background: "#333" }}>
+                      {imagePreview && (
+                        <Cropper
+                          image={imagePreview}
+                          crop={crop}
+                          zoom={zoom}
+                          aspect={2}
+                          cropShape="rect"
+                          showGrid={true}
+                          onCropChange={setCrop}
+                          onZoomChange={setZoom}
+                          onCropComplete={onCropComplete}
+                        />
+                      )}
+                    </div>
+                    <div className="flex gap-4 mt-4 justify-end">
+                      <Button type="button" onClick={() => setCropModalOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button type="button" onClick={handleCropSave}>
+                        Salvar corte
+                      </Button>
+                    </div>
+                  </Modal>
                   <Typography className="text-sm text-muted-foreground mt-2">
-                    Sua imagem deve ser dimensionada em 400x200, nos formatos .PNG, .JPG e .JPEG,
-                    com limite de tamanho de 10MB
+                    Sua imagem será cortada e redimensionada automaticamente para 400x200, nos formatos .PNG, .JPG e .JPEG. Não há limite de tamanho.
                   </Typography>
                 </div>
                 <FormMessage className="text-red-500" />
