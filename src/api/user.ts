@@ -19,8 +19,9 @@ export function mapGenderToApiValue(value?: string | null): string | undefined {
 
   const normalized = trimmed.toLowerCase();
 
-  if (normalized === "male") return "Masculino";
-  if (normalized === "female") return "Feminino";
+  if (normalized === "male" || normalized === "masculino") return "Masculino";
+  if (normalized === "female" || normalized === "feminino") return "Feminino";
+  if (normalized === "other" || normalized === "outro") return "Outro";
 
   return trimmed;
 }
