@@ -254,6 +254,7 @@ export async function getCurrentUserRequest(): Promise<CurrentUser | null> {
         country: z.string().nullable(),
         updatedAt: z.iso.datetime().nullable(),
       })
+      .nullable()
       .optional();
 
     const profileSchema = z.object({
