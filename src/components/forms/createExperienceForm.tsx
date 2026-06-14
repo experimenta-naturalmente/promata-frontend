@@ -33,7 +33,7 @@ import {
   Upload,
 } from "lucide-react";
 import React, { useEffect, useState, useCallback } from "react";
-import Cropper from "react-easy-crop";
+import Cropper, { type Area } from "react-easy-crop";
 import Modal from "@/components/ui/modal";
 import getCroppedImg from "@/utils/cropImage";
 import { useForm } from "react-hook-form";
@@ -155,12 +155,12 @@ const parsePrice = (formattedValue: string) => {
 export function CreateExperience() {
   const { mutate } = useCreateExperience();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const { data: previewLoaded, isLoading: previewLoading } = useLoadImage(imagePreview || "");
+  useLoadImage(imagePreview || "");
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [priceDisplay, setPriceDisplay] = useState<string>("");
   const navigate = useNavigate();
 
@@ -245,7 +245,7 @@ export function CreateExperience() {
     }
   };
 
-  const onCropComplete = useCallback((_, croppedPixels) => {
+  const onCropComplete = useCallback((_croppedArea: Area, croppedPixels: Area) => {
     setCroppedAreaPixels(croppedPixels);
   }, []);
 
