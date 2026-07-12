@@ -119,6 +119,23 @@ function normalizeGenderForAdmin(raw?: string | null): string {
   return "";
 }
 
+const EDIT_USER_ADMIN_DEFAULT_VALUES = {
+  name: "",
+  email: "",
+  phone: "",
+  document: "",
+  rg: "",
+  gender: "",
+  zipCode: "",
+  country: "Brasil",
+  isForeign: false,
+  addressLine: "",
+  city: "",
+  number: "",
+  isAdmin: false,
+  isProfessor: false,
+};
+
 type EditUserAdminProps = {
   userId: string;
 };
@@ -137,22 +154,7 @@ export function EditUserAdmin({ userId }: EditUserAdminProps) {
     z.output<typeof EditUserAdminSchema>
   >({
     resolver: zodResolver(EditUserAdminSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      document: "",
-      rg: "",
-      gender: "",
-      zipCode: "",
-      country: "Brasil",
-      isForeign: false,
-      addressLine: "",
-      city: "",
-      number: "",
-      isAdmin: false,
-      isProfessor: false,
-    },
+    defaultValues: EDIT_USER_ADMIN_DEFAULT_VALUES,
   });
 
   useEffect(() => {
