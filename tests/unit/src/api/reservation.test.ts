@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/core/api", () => ({
-  api: { post: vi.fn() },
+  api: { post: vi.fn(), delete: vi.fn() },
 }));
 
 import { api } from "@/core/api";
-import { addPeopleMyReservations, cancelReservation } from "@/api/reservation";
+import { addPeopleMyReservations, cancelReservation, deleteReservation } from "@/api/reservation";
 
 type AxiosResponse<T> = import("axios").AxiosResponse<T>;
 
@@ -32,6 +32,16 @@ describe("src/api/reservation", () => {
     await cancelReservation("123");
 
     expect(postSpy).toHaveBeenCalledWith("reservation/group/123/request/cancel");
+  });
+
+  it("deleteReservation deletes reservation group", async () => {
+    const deleteSpy = vi
+      .spyOn(api, "delete")
+      .mockResolvedValueOnce(makeResponse(undefined, 204));
+
+    await deleteReservation("123");
+
+    expect(deleteSpy).toHaveBeenCalledWith("reservation/group/123");
   });
 
   it("addPeopleMyReservations forwards payload", async () => {

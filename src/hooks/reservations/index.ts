@@ -5,4 +5,5 @@ export { useCreateGroupReservation } from "@/hooks/reservations/useCreateGroupRe
 export { useAdminRequests } from "@/hooks/reservations/useAdminRequests";
 export { useViewReservation } from "@/hooks/reservations/useViewReservation";
 export { useSendPaymentProof } from "@/hooks/reservations/useSendPaymentProof";
+export { useDeleteReservation } from "@/hooks/reservations/useDeleteReservation";
 

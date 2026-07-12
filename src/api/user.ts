@@ -379,6 +379,12 @@ export function useIsAdmin() {
   return data?.userType === "ADMIN" || data?.userType === "ROOT";
 }
 
+export function useIsRoot() {
+  const { data } = useQuery(userQueryOptions);
+
+  return data?.userType === "ROOT";
+}
+
 export const userQueryOptions = queryOptions({
   queryKey: ["me"],
   queryFn: getCurrentUserRequest,

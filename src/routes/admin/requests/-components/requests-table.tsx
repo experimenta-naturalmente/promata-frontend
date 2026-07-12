@@ -6,7 +6,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useFilters } from "@/hooks/filters/filters";
-import { Edit, FilterXIcon, MoreHorizontal } from "lucide-react";
+import { Edit, FilterXIcon, MoreHorizontal, Trash } from "lucide-react";
 import { MoonLoader } from "react-spinners";
 import type { TRequestsAdminFilters } from "@/entities/requests-admin-filter";
 import { useFetchAdminRequest } from "@/hooks/requests/use-fetch-request-admin";
@@ -21,6 +21,8 @@ import { RequestsType } from "@/utils/enums/requests-enum";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
+import { useIsRoot } from "@/api/user";
+import { useDeleteReservation } from "@/hooks/reservations/useDeleteReservation";
 
 const PLACE_HOLDER_TRANSLATE_TEXT = {
   experiences: "requests.admin.filters.experiences",
@@ -32,6 +34,8 @@ type FilterKey = keyof typeof PLACE_HOLDER_TRANSLATE_TEXT;
 export default function ReservationRequestsTable() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const isRoot = useIsRoot();
+  const deleteReservationMutation = useDeleteReservation();
   const [selectedFilter, setSelectedFilter] = useState<FilterKey>("experiences");
   const [searchTerm, setSearchTerm] = useState<string>("");
 
@@ -51,6 +55,18 @@ export default function ReservationRequestsTable() {
 
   const handleViewReservationClick = (id: string) => {
     navigate({ to: `/admin/requests/reservation/${id}` });
+  };
+
+  const handleDeleteReservationClick = (id: string) => {
+    if (
+      !window.confirm(
+        "Tem certeza que deseja excluir esta reserva? Esta ação não pode ser desfeita.",
+      )
+    ) {
+      return;
+    }
+
+    deleteReservationMutation.mutate(id);
   };
 
   const debouncedSearchTerm = useDebounce(searchTerm, 200);
@@ -122,6 +138,16 @@ export default function ReservationRequestsTable() {
                 {"Visualizar"}
                 <Edit className="size-4 text-black" />
               </DropdownMenuItem>
+              {isRoot && (
+                <DropdownMenuItem
+                  onClick={() => handleDeleteReservationClick(row.original.id)}
+                  className="cursor-pointer text-default-red gap-3"
+                  disabled={deleteReservationMutation.isPending}
+                >
+                  {"Excluir"}
+                  <Trash className="size-4 text-default-red" />
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         );

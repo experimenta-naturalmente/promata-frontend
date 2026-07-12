@@ -4,6 +4,10 @@ export async function cancelReservation(id: string) {
   return await api.post(`reservation/group/${id}/request/cancel`);
 }
 
+export async function deleteReservation(id: string) {
+  return await api.delete(`reservation/group/${id}`);
+}
+
 export type RegisterMember = {
   name: string;
   phone: string;
