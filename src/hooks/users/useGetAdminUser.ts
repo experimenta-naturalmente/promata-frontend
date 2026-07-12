@@ -11,9 +11,10 @@ type useGetAdminUserParams = {
 export const useGetAdminUser = ({ id }: useGetAdminUserParams) => {
   const { data, isFetching, isLoading, isError, error, refetch } = useQuery({
     queryKey: [ADMIN_USER_QUERY_KEY, id],
+    enabled: !!id,
     queryFn: async () => {
       const response = await getUserById(id);
-      
+
       return response;
     },
   });

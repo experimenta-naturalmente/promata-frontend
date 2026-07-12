@@ -25,7 +25,7 @@ import {
 } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "@tanstack/react-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { useForm } from "../form";
 import { t } from "i18next";
@@ -108,6 +108,17 @@ const EditUserAdminSchema = z
 
 export type TEditUserAdminSchema = z.infer<typeof EditUserAdminSchema>;
 
+function normalizeGenderForAdmin(raw?: string | null): string {
+  if (!raw) return "";
+  const g = raw.toString().trim().toLowerCase();
+
+  if (["m", "male", "masculino"].includes(g)) return "Masculino";
+  if (["f", "female", "feminino"].includes(g)) return "Feminino";
+  if (["o", "other", "outro", "outros"].includes(g)) return "Outros";
+
+  return "";
+}
+
 type EditUserAdminProps = {
   userId: string;
 };
@@ -126,26 +137,55 @@ export function EditUserAdmin({ userId }: EditUserAdminProps) {
     z.output<typeof EditUserAdminSchema>
   >({
     resolver: zodResolver(EditUserAdminSchema),
-    defaultValues: React.useMemo(
-      () => ({
-        name: data?.name,
-        email: data?.email,
-        phone: data?.phone,
-        document: data?.document,
-        rg: data?.rg ?? undefined,
-        gender: data?.gender,
-        zipCode: data?.zipCode,
-        country: data?.country,
-        isForeign: data?.isForeign,
-        addressLine: data?.addressLine,
-        city: data?.city,
-        number: data?.number?.toString(),
-        isAdmin: data?.isAdmin,
-        isProfessor: data?.isProfessor,
-      }),
-      [data],
-    ),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      document: "",
+      rg: "",
+      gender: "",
+      zipCode: "",
+      country: "Brasil",
+      isForeign: false,
+      addressLine: "",
+      city: "",
+      number: "",
+      isAdmin: false,
+      isProfessor: false,
+    },
   });
+
+  useEffect(() => {
+    if (!data) return;
+
+    const isForeignUser = !!data.isForeign;
+
+    form.reset({
+      name: data.name ?? "",
+      email: data.email ?? "",
+      phone: data.phone ?? "",
+      document: data.document
+        ? isForeignUser
+          ? data.document
+          : maskCpf(data.document)
+        : "",
+      rg: data.rg ?? "",
+      gender: normalizeGenderForAdmin(data.gender),
+      zipCode: data.zipCode
+        ? isForeignUser
+          ? data.zipCode
+          : maskCep(data.zipCode)
+        : "",
+      country: data.country ?? (isForeignUser ? "" : "Brasil"),
+      isForeign: isForeignUser,
+      addressLine: data.addressLine ?? "",
+      city: data.city ?? "",
+      number: data.number != null ? String(data.number) : "",
+      isAdmin: !!data.isAdmin,
+      isProfessor: !!data.isProfessor,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
 
   const isForeign = form.watch("isForeign");
   const watchedZip = form.watch("zipCode");

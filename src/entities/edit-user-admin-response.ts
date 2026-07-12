@@ -2,21 +2,21 @@ import z from "zod";
 
 export const EditUserAdminResponse = z
   .object({
-    name: z.string().max(100).optional(),
-    email: z.string().optional(),
-    phone: z.string().optional(),
-    document: z.string().optional(),
+    name: z.string().max(100).optional().nullable(),
+    email: z.string().optional().nullable(),
+    phone: z.string().optional().nullable(),
+    document: z.string().optional().nullable(),
     rg: z.string().optional().nullable(),
-    gender: z.string().optional(),
-    zipCode: z.string().optional(),
-    userType: z.string().optional(),
-    city: z.string().optional(),
-    country: z.string().optional(),
-    addressLine: z.string().optional(),
+    gender: z.string().optional().nullable(),
+    zipCode: z.string().optional().nullable(),
+    userType: z.string().optional().nullable(),
+    city: z.string().optional().nullable(),
+    country: z.string().optional().nullable(),
+    addressLine: z.string().optional().nullable(),
     number: z.number().optional().nullable(),
     institution: z.string().optional().nullable(),
-    isForeign: z.boolean().optional(),
-    isAdmin: z.boolean().optional(),
+    isForeign: z.boolean().optional().nullable(),
+    isAdmin: z.boolean().optional().nullable(),
   })
   .transform((data) => ({
     ...data,
