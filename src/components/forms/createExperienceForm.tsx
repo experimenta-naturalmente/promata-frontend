@@ -2,6 +2,7 @@
 import { Button } from "@/components/button/defaultButton";
 import { TextInput } from "@/components/input/textInput";
 import { appToast } from "@/components/toast/toast";
+import { toastApiError, toastApiSuccess } from "@/lib/api-message";
 import { Typography } from "@/components/typography/typography";
 import { Button as ShadcnButton } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -264,12 +265,12 @@ export function CreateExperience() {
     };
 
     mutate(payload, {
-      onSuccess: () => {
-        appToast.success("Experiência criada com sucesso");
+      onSuccess: (response) => {
+        toastApiSuccess(response?.data, "Experiência criada com sucesso");
         navigate({ to: "/admin/experiences" });
       },
-      onError: () => {
-        appToast.error("Erro ao criar experiência");
+      onError: (error) => {
+        toastApiError(error, "Erro ao criar experiência");
       },
     });
   });

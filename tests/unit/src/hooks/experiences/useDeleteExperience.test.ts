@@ -58,7 +58,8 @@ vi.mock("@tanstack/react-query", async () => {
 
 type MutationConfig = {
   mutationFn?: (experienceId: string) => Promise<unknown>;
-  onSuccess?: () => Promise<unknown> | void;
+  onSuccess?: (response?: unknown) => Promise<unknown> | void;
+  onError?: (error: unknown) => Promise<unknown> | void;
 };
 
 const getMutationConfig = () =>
@@ -102,7 +103,7 @@ runDescribe("useDeleteExperience", () => {
 
     const config = getMutationConfig();
 
-    await config?.onSuccess?.();
+    await config?.onSuccess?.({ data: undefined });
 
     expect(reactQueryMocks.queryClient.invalidateQueries).toHaveBeenCalledTimes(4);
     expect(reactQueryMocks.queryClient.invalidateQueries).toHaveBeenCalledWith({

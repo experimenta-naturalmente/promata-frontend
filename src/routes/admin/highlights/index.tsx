@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { appToast } from "@/components/toast/toast";
+import { toastApiError, toastApiSuccess } from "@/lib/api-message";
 import { CanvasCard } from "@/components/card";
 import { MoonLoader } from "react-spinners";
 import { useLoadImage } from "@/hooks";
@@ -210,13 +211,13 @@ export function RouteComponent() {
           },
         },
         {
-          onSuccess: () => {
-            appToast.success("Destaque atualizado com sucesso!");
+          onSuccess: (response) => {
+            toastApiSuccess(response, "Destaque atualizado com sucesso!");
             handleCloseDialog();
             refetch();
           },
-          onError: () => {
-            appToast.error("Erro ao atualizar destaque");
+          onError: (error) => {
+            toastApiError(error, "Erro ao atualizar destaque");
           },
         },
       );
@@ -231,13 +232,13 @@ export function RouteComponent() {
           order: highlights[selectedCategory].length + 1,
         },
         {
-          onSuccess: () => {
-            appToast.success("Destaque criado com sucesso!");
+          onSuccess: (response) => {
+            toastApiSuccess(response, "Destaque criado com sucesso!");
             handleCloseDialog();
             refetch();
           },
-          onError: () => {
-            appToast.error("Erro ao criar destaque");
+          onError: (error) => {
+            toastApiError(error, "Erro ao criar destaque");
           },
         },
       );
@@ -260,13 +261,13 @@ export function RouteComponent() {
     }
 
     deleteMutation.mutate(highlightToDelete.id, {
-      onSuccess: () => {
-        appToast.success("Destaque excluído com sucesso!");
+      onSuccess: (response) => {
+        toastApiSuccess(response, "Destaque excluído com sucesso!");
         handleCloseDeleteDialog();
         refetch();
       },
-      onError: () => {
-        appToast.error("Erro ao excluir destaque");
+      onError: (error) => {
+        toastApiError(error, "Erro ao excluir destaque");
       },
     });
   };

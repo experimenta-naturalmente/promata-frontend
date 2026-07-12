@@ -66,7 +66,11 @@ type MutationParams = {
 
 type MutationConfig = {
   mutationFn?: (params: MutationParams) => Promise<unknown>;
-  onSuccess?: () => Promise<void> | void;
+  onSuccess?: (
+    response: unknown,
+    variables: MutationParams,
+  ) => Promise<void> | void;
+  onError?: (error: unknown) => Promise<void> | void;
 };
 
 const getMutationConfig = () => reactQueryMocks.getLastConfig();
@@ -105,7 +109,7 @@ runDescribe("useToggleExperienceStatus", () => {
 
     const config = getMutationConfig();
 
-    await config?.onSuccess?.();
+    await config?.onSuccess?.({ data: undefined }, { experienceId: "exp-1", active: true });
 
     expect(reactQueryMocks.queryClient.invalidateQueries).toHaveBeenCalledTimes(4);
     expect(reactQueryMocks.queryClient.invalidateQueries).toHaveBeenCalledWith({
