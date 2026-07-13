@@ -343,12 +343,16 @@ export function CreateExperience() {
                       )}
                     </div>
                     <div className="flex gap-4 mt-4 justify-end">
-                      <Button type="button" onClick={() => setCropModalOpen(false)}>
-                        Cancelar
-                      </Button>
-                      <Button type="button" onClick={handleCropSave}>
-                        Salvar corte
-                      </Button>
+                      <Button
+                        type="button"
+                        label="Cancelar"
+                        onClick={() => setCropModalOpen(false)}
+                      />
+                      <Button
+                        type="button"
+                        label="Salvar corte"
+                        onClick={handleCropSave}
+                      />
                     </div>
                   </Modal>
                   <Typography className="text-sm text-muted-foreground mt-2">
