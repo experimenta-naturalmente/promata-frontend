@@ -20,6 +20,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { COUNTRIES } from "@/lib/countries";
 import { appToast } from "@/components/toast/toast";
+import { toastApiError } from "@/lib/api-message";
 import {
   digitsOnly,
   hashPassword,
@@ -267,11 +268,11 @@ export function RegisterUser() {
           setAutoFilled({ addressLine: false, city: false });
           navigate({ to: "/auth/login" });
         } else {
-          appToast.error(t("register.toasts.error"));
+          appToast.error(response.message || t("register.toasts.error"));
         }
       },
-      onError: () => {
-        appToast.error(t("register.toasts.error"));
+      onError: (error) => {
+        toastApiError(error, t("register.toasts.error"));
       },
     });
   };
