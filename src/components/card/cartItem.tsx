@@ -1,6 +1,6 @@
 import React, { Fragment, type ReactElement, useMemo } from "react";
 import { BsSpeedometer2 } from "react-icons/bs";
-import { CalendarClock, Map, Timer, Trash2, Users } from "lucide-react";
+import { CalendarClock, DollarSign, Map, Timer, Trash2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ExperienceCategoryCard, type ExperienceDTO } from "@/types/experience";
 import { resolveImageUrl } from "@/utils/resolveImageUrl";
@@ -15,22 +15,28 @@ export interface CartItemProps {
 }
 
 const minutesToHours = (m?: number | null) => (m ? +(m / 60).toFixed(1) : 0);
-const Line: React.FC<{ icon?: React.ReactNode; children: React.ReactNode }> = ({ icon = null, children }) => (
+const Line: React.FC<{ icon?: React.ReactNode; children: React.ReactNode }> = ({
+  icon = null,
+  children,
+}) => (
   <div className="inline-flex items-center gap-2 text-[13px] font-bold leading-none text-foreground">
     {icon}
     {children}
   </div>
 );
 
-const PriceBlock: React.FC<{ price: string }> = ({ price }) => (
-  <div className="inline-flex items-center justify-center rounded-full bg-banner px-3 py-1 shadow-sm">
-    <span className="font-extrabold text-[13px] leading-none text-main-dark-green">{price}</span>
-  </div>
+const RangeIcon: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-main-dark-green text-white">
+    {children}
+  </span>
 );
 
 const CartItem: React.FC<CartItemProps> = ({ experience: e, onSelect, onRemove, className }) => {
   const { t, i18n } = useTranslation();
-  const locale = useMemo(() => (i18n.language?.startsWith("pt") ? "pt-BR" : "en-US"), [i18n.language]);
+  const locale = useMemo(
+    () => (i18n.language?.startsWith("pt") ? "pt-BR" : "en-US"),
+    [i18n.language],
+  );
   const currencyFormatter = useMemo(
     () => new Intl.NumberFormat(locale, { style: "currency", currency: "BRL" }),
     [locale],
@@ -55,15 +61,44 @@ const CartItem: React.FC<CartItemProps> = ({ experience: e, onSelect, onRemove, 
   const imageUrl = resolveImageUrl(e.image?.url);
   const { data: imageLoaded, isLoading: imageLoading } = useLoadImage(imageUrl);
   const title = e.name;
-  const price = currencyFormatter.format(e.price ?? 0);
+  const maxCapacity = Number(e.capacity ?? 0);
+  const unitPrice = e.price == null ? null : Number(e.price);
+  const maxPrice =
+    e.priceMax == null ? (unitPrice == null ? null : unitPrice * maxCapacity) : Number(e.priceMax);
+  const priceLabel =
+    unitPrice != null && Number.isFinite(unitPrice) && maxPrice != null && Number.isFinite(maxPrice)
+      ? `${currencyFormatter.format(unitPrice)} - ${currencyFormatter.format(maxPrice)}`
+      : "-";
 
-  const minCapacity = e.minCapacity ?? 1;
-  const capacityLabel =
-    minCapacity > 1
-      ? t("cartItem.capacityRange", { min: minCapacity, max: e.capacity ?? 0 })
-      : t("cartItem.capacity", { count: e.capacity ?? 0 });
+  const minCapacity = Number(e.minCapacity ?? 1);
+  const rawCapacity = t("cartItem.capacityRange", {
+    min: minCapacity,
+    max: maxCapacity,
+  });
+  const capacityLabel = rawCapacity.startsWith("cartItem.capacity")
+    ? `${minCapacity} - ${maxCapacity} ${i18n.language?.startsWith("pt") ? "pessoas" : "people"}`
+    : rawCapacity.replace(/\s+(a|to)\s+/i, " - ");
   const capacityLine = (
-    <Line icon={<Users className="h-5 w-5 text-foreground" />}>{capacityLabel}</Line>
+    <Line
+      icon={
+        <RangeIcon>
+          <Users className="h-4 w-4" />
+        </RangeIcon>
+      }
+    >
+      {capacityLabel}
+    </Line>
+  );
+  const priceLine = (
+    <Line
+      icon={
+        <RangeIcon>
+          <DollarSign className="h-4 w-4" />
+        </RangeIcon>
+      }
+    >
+      {priceLabel}
+    </Line>
   );
 
   const lengthLabel =
@@ -139,7 +174,9 @@ const CartItem: React.FC<CartItemProps> = ({ experience: e, onSelect, onRemove, 
   const leftInfo = [capacityLine, difficultyLine, eventDateLine].filter(
     (line): line is ReactElement => Boolean(line),
   );
-  const rightInfo = [lengthLine, durationLine].filter((line): line is ReactElement => Boolean(line));
+  const rightInfo = [lengthLine, durationLine].filter((line): line is ReactElement =>
+    Boolean(line),
+  );
 
   return (
     <article
@@ -160,9 +197,7 @@ const CartItem: React.FC<CartItemProps> = ({ experience: e, onSelect, onRemove, 
           }`}
           loading="lazy"
         />
-        {imageLoading && (
-          <div className="absolute inset-0 animate-pulse bg-muted rounded-md" />
-        )}
+        {imageLoading && <div className="absolute inset-0 animate-pulse bg-muted rounded-md" />}
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-3">
@@ -199,9 +234,7 @@ const CartItem: React.FC<CartItemProps> = ({ experience: e, onSelect, onRemove, 
           )}
         </div>
 
-        <div className="mt-auto">
-          <PriceBlock price={price} />
-        </div>
+        <div className="mt-auto">{priceLine}</div>
       </div>
     </article>
   );
