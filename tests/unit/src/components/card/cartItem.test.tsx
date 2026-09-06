@@ -47,6 +47,18 @@ describe("CartItem", () => {
     expect(screen.getByText(/1\s?-\s?5\s?pessoas/)).toBeInTheDocument();
   });
 
+  it("renders the experience category badge beside its name", () => {
+    renderWithProviders(
+      <CartItem
+        experience={makeExperience({
+          category: ExperienceCategoryCard.ROOM,
+        })}
+      />,
+    );
+
+    expect(screen.getByText("Quarto")).toBeInTheDocument();
+  });
+
   it("falls back to zero capacity when no value provided", () => {
     renderWithProviders(
       <CartItem

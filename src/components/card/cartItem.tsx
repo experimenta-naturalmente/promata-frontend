@@ -6,6 +6,7 @@ import { ExperienceCategoryCard, type ExperienceDTO } from "@/types/experience";
 import { resolveImageUrl } from "@/utils/resolveImageUrl";
 import { useTranslation } from "react-i18next";
 import { useLoadImage } from "@/hooks/shared/useLoadImage";
+import { translateExperienceCategory } from "@/utils/translateExperienceCategory";
 
 export interface CartItemProps {
   experience: ExperienceDTO;
@@ -61,6 +62,11 @@ const CartItem: React.FC<CartItemProps> = ({ experience: e, onSelect, onRemove, 
   const imageUrl = resolveImageUrl(e.image?.url);
   const { data: imageLoaded, isLoading: imageLoading } = useLoadImage(imageUrl);
   const title = e.name;
+  const categoryLabel = translateExperienceCategory(
+    e.category,
+    t,
+    String(e.category).toLowerCase(),
+  );
   const maxCapacity = Number(e.capacity ?? 0);
   const unitPrice = e.price == null ? null : Number(e.price);
   const maxPrice =
@@ -202,9 +208,12 @@ const CartItem: React.FC<CartItemProps> = ({ experience: e, onSelect, onRemove, 
 
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="flex-1 text-[16px] font-semibold leading-tight text-foreground">
-            {title}
-          </h3>
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            <h3 className="text-[16px] font-semibold leading-tight text-foreground">{title}</h3>
+            <span className="h-fit rounded-[30px] bg-banner px-3 py-[6px] text-[11px] font-semibold capitalize text-on-banner-text">
+              {categoryLabel}
+            </span>
+          </div>
           <button
             type="button"
             onClick={handleRemove}
