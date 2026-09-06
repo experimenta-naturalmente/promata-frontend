@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { useLoadImage } from "@/hooks/shared/useLoadImage";
 import { type Experience, ExperienceCategoryCard } from "@/types/experience";
 import { translateExperienceCategory } from "@/utils/translateExperienceCategory";
+import { MarkdownContent } from "@/components/text-areas";
 
 interface CardExperienceProps {
   experience: Experience;
@@ -274,12 +275,9 @@ export function CardExperience({ experience }: CardExperienceProps) {
             </Typography>
           </div>
 
-          <Typography
-            variant="body"
-            className="text-dark-gray scrollbar-hide m-0 max-h-32 w-full overflow-y-auto text-[14px] font-semibold"
-          >
+          <MarkdownContent className="text-dark-gray scrollbar-hide m-0 max-h-32 w-full overflow-y-auto text-[14px] font-normal [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm">
             {experience.description ?? ""}
-          </Typography>
+          </MarkdownContent>
         </div>
 
         {detailLabels.length > 0 && (

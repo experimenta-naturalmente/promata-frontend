@@ -48,6 +48,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { useGetExperience, useUpdateExperience } from "@/hooks";
+import { MarkdownTextArea } from "@/components/text-areas";
 
 const MAX_IMAGES = 10;
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
@@ -763,10 +764,10 @@ export function EditExperience({ experienceId }: EditExperienceProps) {
                 <Typography className="text-foreground font-medium">
                   Descrição da experiência
                 </Typography>
-                <textarea
-                  className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                <MarkdownTextArea
+                  value={field.value}
+                  onChange={field.onChange}
                   placeholder="Descreva a experiência..."
-                  {...field}
                 />
                 <FormMessage className="text-red-500" />
               </FormItem>

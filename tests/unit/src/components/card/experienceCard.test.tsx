@@ -133,6 +133,20 @@ describe("CardExperience", () => {
     expect(screen.getByText(/R\$/)).toBeInTheDocument();
   });
 
+  it("renderiza a descrição com formatação de rich text", () => {
+    renderWithClient(
+      <CardExperience
+        experience={buildExperience({
+          description: "**Negrito** e *itálico*\n\n- item da lista",
+        })}
+      />,
+    );
+
+    expect(screen.getByText("Negrito").tagName).toBe("STRONG");
+    expect(screen.getByText("itálico").tagName).toBe("EM");
+    expect(screen.getByText("item da lista").closest("li")).toBeInTheDocument();
+  });
+
   it("mostra o intervalo entre as capacidades mínima e máxima", () => {
     renderWithClient(
       <CardExperience experience={buildExperience({ minCapacity: 3, capacity: 38 })} />,

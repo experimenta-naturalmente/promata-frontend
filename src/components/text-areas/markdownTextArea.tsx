@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import remarkBreaks from "remark-breaks";
 import { Textarea } from "@/components/ui/textarea";
+import { MarkdownContent } from "@/components/text-areas/markdownContent";
 import {
   Bold,
   Heading,
@@ -242,30 +240,7 @@ export function MarkdownTextArea({ value, onChange, placeholder }: MarkdownTextA
           />
         ) : (
           <div className="w-full p-4 bg-gray-50 text-base overflow-y-auto rounded-b-xl min-h-[14rem] max-h-[32rem]">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm, remarkBreaks]}
-              components={{
-                blockquote: () => null,
-                h1: ({ ...props }) => (
-                  <h1 className="text-2xl font-bold mt-2 mb-2" {...props} />
-                ),
-                h2: ({ ...props }) => (
-                  <h2 className="text-xl font-bold mt-2 mb-2" {...props} />
-                ),
-                h3: ({ ...props }) => (
-                  <h3 className="text-lg font-bold mt-2 mb-2" {...props} />
-                ),
-                ul: ({ ...props }) => (
-                  <ul className="list-disc ml-6 my-2" {...props} />
-                ),
-                ol: ({ ...props }) => (
-                  <ol className="list-decimal ml-6 my-2" {...props} />
-                ),
-                li: ({ ...props }) => <li className="mb-1" {...props} />,
-              }}
-            >
-              {value || "Nada para visualizar."}
-            </ReactMarkdown>
+            <MarkdownContent>{value || "Nada para visualizar."}</MarkdownContent>
           </div>
         )}
       </div>
