@@ -16,6 +16,7 @@ function makePayload(
     experienceName: "Experience name",
     experienceDescription: "Description",
     experienceCategory: "GENERAL" as ExperienceCategory,
+    experienceMinCapacity: "5",
     experienceCapacity: "20",
     experienceImage: "image.png",
     experienceStartDate: "2024-01-01",

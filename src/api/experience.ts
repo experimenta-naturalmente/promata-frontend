@@ -14,6 +14,7 @@ export interface CreateExperiencePayload {
   experienceName: string;
   experienceDescription: string;
   experienceCategory: ExperienceCategory;
+  experienceMinCapacity: number;
   experienceCapacity: number;
   experienceImage: File;
   experienceStartDate?: Date;
@@ -31,6 +32,7 @@ export async function createExperience(payload: CreateExperiencePayload) {
   formData.append("experienceName", payload.experienceName);
   formData.append("experienceDescription", payload.experienceDescription);
   formData.append("experienceCategory", payload.experienceCategory);
+  formData.append("experienceMinCapacity", payload.experienceMinCapacity.toString());
   formData.append("experienceCapacity", payload.experienceCapacity.toString());
   formData.append("image", payload.experienceImage);
 
@@ -132,6 +134,7 @@ export interface UpdateExperiencePayload {
   experienceName: string;
   experienceDescription: string;
   experienceCategory: ExperienceCategory;
+  experienceMinCapacity: string;
   experienceCapacity: string;
   experienceImage?: File | string;
   experienceStartDate?: Date | string;
@@ -149,6 +152,7 @@ export async function updateExperience(experienceId: string, payload: UpdateExpe
   formData.append("experienceName", payload.experienceName);
   formData.append("experienceDescription", payload.experienceDescription);
   formData.append("experienceCategory", payload.experienceCategory);
+  formData.append("experienceMinCapacity", payload.experienceMinCapacity);
   formData.append("experienceCapacity", payload.experienceCapacity);
   formData.append("experiencePrice", payload.experiencePrice);
 

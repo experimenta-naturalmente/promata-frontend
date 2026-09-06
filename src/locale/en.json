@@ -51,6 +51,7 @@
   "cartItem": {
     "capacity_one": "{{count}} person",
     "capacity_other": "{{count}} people",
+    "capacityRange": "{{min}} to {{max}} people",
     "length": "{{length}} km",
     "duration": "{{value}} h",
     "difficulty": {

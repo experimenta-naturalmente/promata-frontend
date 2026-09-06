@@ -68,6 +68,7 @@ export interface ExperienceApiResponse {
   name?: string;
   description?: string | null;
   category?: ExperienceCategory;
+  minCapacity?: RawNumber;
   capacity?: RawNumber;
   image?: ExperienceApiImage;
   startDate?: string | null;
@@ -84,6 +85,7 @@ export interface ExperienceApiResponse {
   experienceName?: string;
   experienceDescription?: string | null;
   experienceCategory?: ExperienceCategory;
+  experienceMinCapacity?: RawNumber;
   experienceCapacity?: RawNumber;
   experienceImage?: ExperienceApiImage;
   experienceStartDate?: string | null;
@@ -99,6 +101,8 @@ export interface ExperienceDTO {
   name: string;
   description?: string | null;
   category: ExperienceCategoryCard;
+  /** Extremidade inferior do intervalo de pessoas; `capacity` é a superior. */
+  minCapacity?: number | null;
   capacity?: number | null;
   startDate?: string | null;
   endDate?: string | null;
@@ -188,6 +192,7 @@ export const mapExperienceApiResponseToDTO = (apiExperience: ExperienceApiRespon
     name,
     description: apiExperience.description ?? apiExperience.experienceDescription ?? null,
     category,
+    minCapacity: toNumberOrNull(apiExperience.minCapacity ?? apiExperience.experienceMinCapacity),
     capacity: toNumberOrNull(apiExperience.capacity ?? apiExperience.experienceCapacity),
     startDate: apiExperience.startDate ?? apiExperience.experienceStartDate ?? null,
     endDate: apiExperience.endDate ?? apiExperience.experienceEndDate ?? null,

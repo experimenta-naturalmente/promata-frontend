@@ -57,9 +57,11 @@ const CartItem: React.FC<CartItemProps> = ({ experience: e, onSelect, onRemove, 
   const title = e.name;
   const price = currencyFormatter.format(e.price ?? 0);
 
-  const capacityLabel = t("cartItem.capacity", {
-    count: e.capacity ?? 0,
-  });
+  const minCapacity = e.minCapacity ?? 1;
+  const capacityLabel =
+    minCapacity > 1
+      ? t("cartItem.capacityRange", { min: minCapacity, max: e.capacity ?? 0 })
+      : t("cartItem.capacity", { count: e.capacity ?? 0 });
   const capacityLine = (
     <Line icon={<Users className="h-5 w-5 text-foreground" />}>{capacityLabel}</Line>
   );

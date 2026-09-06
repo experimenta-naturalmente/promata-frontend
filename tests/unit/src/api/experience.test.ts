@@ -79,6 +79,7 @@ describe("src/api/experience", () => {
       experienceName: "Trilha X",
       experienceDescription: "Desc",
       experienceCategory: "TRAIL" as unknown as CreateExperiencePayload["experienceCategory"],
+      experienceMinCapacity: 2,
       experienceCapacity: 12,
       experienceImage: new File(["content"], "image.png", { type: "image/png" }),
       experienceStartDate: new Date("2024-03-01T00:00:00.000Z"),
@@ -101,6 +102,7 @@ describe("src/api/experience", () => {
     const callFormData = (postSpy.mock.calls[0] as unknown[])[1] as FormDataStub;
 
     expect(callFormData.getAll("experienceName")).toEqual(["Trilha X"]);
+    expect(callFormData.getAll("experienceMinCapacity")).toEqual(["2"]);
     expect(callFormData.getAll("experienceCapacity")).toEqual(["12"]);
     expect(callFormData.getAll("experienceStartDate")).toEqual([
       (payload.experienceStartDate as Date).toISOString(),
@@ -122,6 +124,7 @@ describe("src/api/experience", () => {
       experienceName: "Base",
       experienceDescription: "No optionals",
       experienceCategory: "TRAIL" as unknown as CreateExperiencePayload["experienceCategory"],
+      experienceMinCapacity: 1,
       experienceCapacity: 5,
       experienceImage: new File(["file"], "image.png", { type: "image/png" }),
       experienceWeekDays: [],
@@ -184,6 +187,7 @@ describe("src/api/experience", () => {
       experienceName: "Updated",
       experienceDescription: "Desc",
       experienceCategory: "TRAIL" as unknown as UpdateExperiencePayload["experienceCategory"],
+      experienceMinCapacity: "3",
       experienceCapacity: "12",
       experienceImage: new File(["new"], "new.png", { type: "image/png" }),
       experienceStartDate: new Date("2024-04-01T00:00:00.000Z"),
@@ -206,6 +210,8 @@ describe("src/api/experience", () => {
     const formData = (patchSpy.mock.calls[0] as unknown[])[1] as FormDataStub;
 
     expect(formData.getAll("image")).toHaveLength(1);
+    expect(formData.getAll("experienceMinCapacity")).toEqual(["3"]);
+    expect(formData.getAll("experienceCapacity")).toEqual(["12"]);
     expect(formData.getAll("experienceStartDate")).toEqual([
       (payload.experienceStartDate as Date).toISOString(),
     ]);
@@ -223,6 +229,7 @@ describe("src/api/experience", () => {
       experienceName: "Mixed",
       experienceDescription: "Dates",
       experienceCategory: "TRAIL" as unknown as UpdateExperiencePayload["experienceCategory"],
+      experienceMinCapacity: "1",
       experienceCapacity: "20",
       experiencePrice: "200",
       experienceWeekDays: ["tuesday"],
@@ -247,6 +254,7 @@ describe("src/api/experience", () => {
       experienceName: "Keep",
       experienceDescription: "Minimal",
       experienceCategory: "TRAIL" as unknown as UpdateExperiencePayload["experienceCategory"],
+      experienceMinCapacity: "1",
       experienceCapacity: "8",
       experienceImage: "existing.png",
       experiencePrice: "45",

@@ -77,13 +77,18 @@ export function CardExperience({ experience }: CardExperienceProps) {
         experience.category.toLowerCase());
 
   // Labels com fallback caso i18n não esteja carregado no teste
-  const rawCapacity = t("cartItem.capacity", {
-    count: Number(experience.capacity ?? 0),
-  });
-  const capacityLabel =
-    rawCapacity === "cartItem.capacity"
-      ? `${Number(experience.capacity ?? 0)} ${i18n.language?.startsWith("pt") ? "pessoas" : "people"}`
-      : rawCapacity;
+  const minCapacity = Number(experience.minCapacity ?? 1);
+  const maxCapacity = Number(experience.capacity ?? 0);
+  const isCapacityRange = minCapacity > 1;
+  const rawCapacity = isCapacityRange
+    ? t("cartItem.capacityRange", { min: minCapacity, max: maxCapacity })
+    : t("cartItem.capacity", { count: maxCapacity });
+  const capacityFallback = isCapacityRange
+    ? `${minCapacity} ${i18n.language?.startsWith("pt") ? "a" : "to"} ${maxCapacity} ${i18n.language?.startsWith("pt") ? "pessoas" : "people"}`
+    : `${maxCapacity} ${i18n.language?.startsWith("pt") ? "pessoas" : "people"}`;
+  const capacityLabel = rawCapacity.startsWith("cartItem.capacity")
+    ? capacityFallback
+    : rawCapacity;
 
   const lengthLabel =
     experience.trailLength != null

@@ -70,6 +70,7 @@ vi.mock("react-i18next", () => ({
         "Common.event": "Eventos",
         "Common.custom": "Custom",
         "cartItem.capacity": `${params?.count ?? ""} pessoas`,
+        "cartItem.capacityRange": `${params?.min ?? ""} a ${params?.max ?? ""} pessoas`,
         "cartItem.length": `${params?.length ?? ""} km`,
         "cartItem.duration": `${params?.value ?? ""} h`,
         "cartItem.difficulty.easy": "Fácil",
@@ -130,6 +131,20 @@ describe("CardExperience", () => {
     expect(screen.getByText(/1,5 h/)).toBeInTheDocument();
     expect(screen.getByText(/Fácil/i)).toBeInTheDocument();
     expect(screen.getByText(/R\$/)).toBeInTheDocument();
+  });
+
+  it("mostra o intervalo de pessoas quando a capacidade mínima é maior que 1", () => {
+    renderWithClient(
+      <CardExperience experience={buildExperience({ minCapacity: 3, capacity: 38 })} />,
+    );
+    expect(screen.getByText("3 a 38 pessoas")).toBeInTheDocument();
+  });
+
+  it("mostra apenas a capacidade máxima quando a mínima é 1", () => {
+    renderWithClient(
+      <CardExperience experience={buildExperience({ minCapacity: 1, capacity: 38 })} />,
+    );
+    expect(screen.getByText("38 pessoas")).toBeInTheDocument();
   });
 
   it("aciona addItem e openCart ao clicar no botão", async () => {

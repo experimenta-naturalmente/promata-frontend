@@ -44,7 +44,8 @@ const formSchema = z
     experienceName: z.string().min(2, "Informe o nome da experiência"),
     experienceDescription: z.string().min(2, "Informe a descrição da experiência"),
     experienceCategory: z.nativeEnum(ExperienceCategory),
-    experienceCapacity: z.string().min(1, "Informe a quantidade de pessoas"),
+    experienceMinCapacity: z.string().min(1, "Informe a quantidade mínima de pessoas"),
+    experienceCapacity: z.string().min(1, "Informe a quantidade máxima de pessoas"),
     experienceImage: z.union([z.instanceof(File), z.string()]).optional(),
     experienceStartDate: z.union([z.date(), z.string()]).optional(),
     experienceEndDate: z.union([z.date(), z.string()]).optional(),
@@ -73,6 +74,35 @@ const formSchema = z
         code: "custom",
         message: "A data de fim deve ser posterior à data de início",
         path: ["experienceEndDate"],
+      });
+    }
+
+    const minCapacity = Number(data.experienceMinCapacity);
+    const maxCapacity = Number(data.experienceCapacity);
+    const isValidMin = Number.isInteger(minCapacity) && minCapacity >= 1;
+    const isValidMax = Number.isInteger(maxCapacity) && maxCapacity >= 1;
+
+    if (!isValidMin) {
+      ctx.addIssue({
+        code: "custom",
+        message: "A quantidade mínima deve ser um número inteiro a partir de 1",
+        path: ["experienceMinCapacity"],
+      });
+    }
+
+    if (!isValidMax) {
+      ctx.addIssue({
+        code: "custom",
+        message: "A quantidade máxima deve ser um número inteiro a partir de 1",
+        path: ["experienceCapacity"],
+      });
+    }
+
+    if (isValidMin && isValidMax && minCapacity > maxCapacity) {
+      ctx.addIssue({
+        code: "custom",
+        message: "A quantidade máxima deve ser maior ou igual à mínima",
+        path: ["experienceCapacity"],
       });
     }
 
@@ -170,6 +200,7 @@ export function EditExperience({ experienceId }: EditExperienceProps) {
       experienceName: "",
       experienceDescription: "",
       experienceCategory: ExperienceCategory.LABORATORIO,
+      experienceMinCapacity: "1",
       experienceCapacity: "1",
       experienceStartDate: undefined,
       experienceEndDate: undefined,
@@ -214,6 +245,7 @@ export function EditExperience({ experienceId }: EditExperienceProps) {
         experienceName: experience.name,
         experienceDescription: experience.description || "",
         experienceCategory: categoryMap[experience.category] || ExperienceCategory.LABORATORIO,
+        experienceMinCapacity: String(experience.minCapacity || 1),
         experienceCapacity: String(experience.capacity || 1),
         experienceStartDate: experience.startDate || undefined,
         experienceEndDate: experience.endDate || undefined,
@@ -307,6 +339,7 @@ export function EditExperience({ experienceId }: EditExperienceProps) {
       experienceName: data.experienceName,
       experienceDescription: data.experienceDescription,
       experienceCategory: data.experienceCategory,
+      experienceMinCapacity: data.experienceMinCapacity,
       experienceCapacity: data.experienceCapacity,
       experienceImage: data.experienceImage,
       experienceStartDate: data.experienceStartDate,
@@ -476,23 +509,46 @@ export function EditExperience({ experienceId }: EditExperienceProps) {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="experienceCapacity"
-              render={({ field }) => (
-                <FormItem>
-                  <TextInput
-                    label="Quantidade de pessoas"
-                    required
-                    type="number"
-                    min="1"
-                    placeholder="Digite a quantidade de pessoas que o laboratório suporta"
-                    {...field}
-                  />
-                  <FormMessage className="text-red-500" />
-                </FormItem>
-              )}
-            />
+            <div className="flex flex-col gap-0">
+              <Typography className="text-foreground font-medium mb-1">
+                Quantidade de pessoas *
+              </Typography>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="experienceMinCapacity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <TextInput
+                        label="Mínimo"
+                        type="number"
+                        min="1"
+                        placeholder="Ex: 1"
+                        {...field}
+                      />
+                      <FormMessage className="text-red-500" />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="experienceCapacity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <TextInput
+                        label="Máximo"
+                        type="number"
+                        min="1"
+                        placeholder="Ex: 38"
+                        {...field}
+                      />
+                      <FormMessage className="text-red-500" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
             <FormField
               control={form.control}
