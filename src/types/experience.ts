@@ -74,6 +74,7 @@ export interface ExperienceApiResponse {
   startDate?: string | null;
   endDate?: string | null;
   price?: RawNumber;
+  priceMax?: RawNumber;
   weekDays?: ExperienceWeekDay[] | null;
   durationMinutes?: RawNumber;
   trailDifficulty?: TrailDifficulty | null;
@@ -101,12 +102,12 @@ export interface ExperienceDTO {
   name: string;
   description?: string | null;
   category: ExperienceCategoryCard;
-  /** Extremidade inferior do intervalo de pessoas; `capacity` é a superior. */
   minCapacity?: number | null;
   capacity?: number | null;
   startDate?: string | null;
   endDate?: string | null;
   price?: number | null;
+  priceMax?: number | null;
   weekDays?: ExperienceWeekDay[] | null;
   durationMinutes?: number | null;
   trailDifficulty?: TrailDifficulty | null;
@@ -231,6 +232,7 @@ export const mapExperienceApiResponseToDTO = (apiExperience: ExperienceApiRespon
     startDate: apiExperience.startDate ?? apiExperience.experienceStartDate ?? null,
     endDate: apiExperience.endDate ?? apiExperience.experienceEndDate ?? null,
     price: toNumberOrNull(apiExperience.price ?? apiExperience.experiencePrice),
+    priceMax: toNumberOrNull(apiExperience.priceMax),
     weekDays: apiExperience.weekDays ?? apiExperience.experienceWeekDays ?? null,
     durationMinutes: toNumberOrNull(
       apiExperience.durationMinutes ?? apiExperience.trailDurationMinutes,

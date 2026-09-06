@@ -22,12 +22,12 @@ export function CardExperience({ experience }: CardExperienceProps) {
 
   const locale = useMemo(
     () => (i18n.language?.startsWith("pt") ? "pt-BR" : "en-US"),
-    [i18n.language]
+    [i18n.language],
   );
 
   const currencyFormatter = useMemo(
     () => new Intl.NumberFormat(locale, { style: "currency", currency: "BRL" }),
-    [locale]
+    [locale],
   );
 
   const decimalFormatter = useMemo(
@@ -36,7 +36,7 @@ export function CardExperience({ experience }: CardExperienceProps) {
         minimumFractionDigits: 0,
         maximumFractionDigits: 1,
       }),
-    [locale]
+    [locale],
   );
 
   const dateFormatter = useMemo(
@@ -46,7 +46,7 @@ export function CardExperience({ experience }: CardExperienceProps) {
         month: "short",
         year: "numeric",
       }),
-    [locale]
+    [locale],
   );
 
   const addItemToCart = useCartStore((state) => state.addItem);
@@ -56,16 +56,12 @@ export function CardExperience({ experience }: CardExperienceProps) {
   const translatedCategoryRaw = translateExperienceCategory(
     experience.category,
     t,
-    experience.category.toLowerCase()
+    experience.category.toLowerCase(),
   );
 
   const categoryFallbackMap: Record<string, string> = {
-    [ExperienceCategoryCard.TRAIL]: i18n.language?.startsWith("pt")
-      ? "Trilhas"
-      : "Trails",
-    [ExperienceCategoryCard.EVENT]: i18n.language?.startsWith("pt")
-      ? "Eventos"
-      : "Events",
+    [ExperienceCategoryCard.TRAIL]: i18n.language?.startsWith("pt") ? "Trilhas" : "Trails",
+    [ExperienceCategoryCard.EVENT]: i18n.language?.startsWith("pt") ? "Eventos" : "Events",
   };
 
   const categoryLabel =
@@ -73,22 +69,21 @@ export function CardExperience({ experience }: CardExperienceProps) {
     !translatedCategoryRaw.startsWith("Common.") &&
     !translatedCategoryRaw.includes(".") // heurística para detectar chave não traduzida
       ? translatedCategoryRaw
-      : (categoryFallbackMap[experience.category] ??
-        experience.category.toLowerCase());
+      : (categoryFallbackMap[experience.category] ?? experience.category.toLowerCase());
 
   // Labels com fallback caso i18n não esteja carregado no teste
   const minCapacity = Number(experience.minCapacity ?? 1);
   const maxCapacity = Number(experience.capacity ?? 0);
-  const isCapacityRange = minCapacity > 1;
-  const rawCapacity = isCapacityRange
-    ? t("cartItem.capacityRange", { min: minCapacity, max: maxCapacity })
-    : t("cartItem.capacity", { count: maxCapacity });
-  const capacityFallback = isCapacityRange
-    ? `${minCapacity} ${i18n.language?.startsWith("pt") ? "a" : "to"} ${maxCapacity} ${i18n.language?.startsWith("pt") ? "pessoas" : "people"}`
-    : `${maxCapacity} ${i18n.language?.startsWith("pt") ? "pessoas" : "people"}`;
+  const rawCapacity = t("cartItem.capacityRange", {
+    min: minCapacity,
+    max: maxCapacity,
+  });
+  const capacityFallback = `${minCapacity} - ${maxCapacity} ${
+    i18n.language?.startsWith("pt") ? "pessoas" : "people"
+  }`;
   const capacityLabel = rawCapacity.startsWith("cartItem.capacity")
     ? capacityFallback
-    : rawCapacity;
+    : rawCapacity.replace(/\s+(a|to)\s+/i, " - ");
 
   const lengthLabel =
     experience.trailLength != null
@@ -105,9 +100,7 @@ export function CardExperience({ experience }: CardExperienceProps) {
     experience.durationMinutes != null
       ? (() => {
           const key = "cartItem.duration";
-          const hours = decimalFormatter.format(
-            minutesToHours(experience.durationMinutes) ?? 0
-          );
+          const hours = decimalFormatter.format(minutesToHours(experience.durationMinutes) ?? 0);
           const txt = t(key, { value: hours });
 
           return txt === key ? `${hours} h` : txt;
@@ -147,8 +140,7 @@ export function CardExperience({ experience }: CardExperienceProps) {
             : "Hard"
           : t("cartItem.difficulty.hard");
       case "EXTREME":
-        return t("cartItem.difficulty.extreme") ===
-          "cartItem.difficulty.extreme"
+        return t("cartItem.difficulty.extreme") === "cartItem.difficulty.extreme"
           ? i18n.language?.startsWith("pt")
             ? "Extremo"
             : "Extreme"
@@ -175,32 +167,32 @@ export function CardExperience({ experience }: CardExperienceProps) {
     return singleDate ? dateFormatter.format(new Date(singleDate)) : undefined;
   })();
 
+  const price = experience.price == null ? null : Number(experience.price);
+  const priceMax =
+    experience.priceMax == null
+      ? price == null
+        ? null
+        : price * maxCapacity
+      : Number(experience.priceMax);
   const priceLabel =
-    experience.price != null ? currencyFormatter.format(experience.price) : "-";
+    price != null && Number.isFinite(price) && priceMax != null && Number.isFinite(priceMax)
+      ? `${currencyFormatter.format(price)} - ${currencyFormatter.format(priceMax)}`
+      : "-";
 
-  const labels: Array<{
+  const detailLabels: Array<{
     icon: ComponentType<{ className?: string }>;
     text: string;
-  }> = [{ icon: Users, text: capacityLabel }];
+  }> = [];
 
   if (experience.category === ExperienceCategoryCard.TRAIL) {
-    if (lengthLabel) labels.push({ icon: Map, text: lengthLabel });
-    if (durationLabel) labels.push({ icon: Timer, text: durationLabel });
-    if (difficultyLabel)
-      labels.push({ icon: BsSpeedometer2, text: difficultyLabel });
+    if (lengthLabel) detailLabels.push({ icon: Map, text: lengthLabel });
+    if (durationLabel) detailLabels.push({ icon: Timer, text: durationLabel });
+    if (difficultyLabel) detailLabels.push({ icon: BsSpeedometer2, text: difficultyLabel });
   }
 
   if (experience.category === ExperienceCategoryCard.EVENT && eventDateLabel) {
-    labels.push({ icon: CalendarClock, text: eventDateLabel });
+    detailLabels.push({ icon: CalendarClock, text: eventDateLabel });
   }
-
-  labels.push({ icon: DollarSign, text: priceLabel });
-
-  const shouldStackLabels =
-    experience.category === ExperienceCategoryCard.EVENT || labels.length === 2;
-  const labelsGridColsClass = shouldStackLabels
-    ? "md:grid-cols-1"
-    : "md:grid-cols-2";
 
   const imageSrc = resolveImageUrl(experience.image?.url);
   const { data: imageLoaded, isLoading: imageLoading } = useLoadImage(imageSrc);
@@ -217,7 +209,7 @@ export function CardExperience({ experience }: CardExperienceProps) {
   })();
 
   return (
-    <div className="bg-card relative flex w-full max-w-[520px] flex-col overflow-hidden rounded-[20px] shadow-sm pb-[72px]">
+    <div className="bg-card relative flex w-full max-w-[520px] flex-col overflow-hidden rounded-[20px] shadow-sm">
       <div className="relative w-full overflow-hidden pb-[54%]">
         <img
           src={imageSrc}
@@ -226,62 +218,69 @@ export function CardExperience({ experience }: CardExperienceProps) {
           }`}
           alt=""
         />
-        {imageLoading && (
-          <div className="absolute inset-0 animate-pulse bg-muted" />
-        )}
+        {imageLoading && <div className="absolute inset-0 animate-pulse bg-muted" />}
       </div>
 
-      <div className="flex flex-col gap-4 px-6 py-5">
-        <div className="flex flex-col gap-4 md:flex-row md:items-stretch md:justify-between">
-          <div className="flex flex-1 flex-col gap-2.5">
-            <div className="flex flex-wrap items-center gap-3">
-              <Typography
-                variant="h3"
-                className="flex items-center p-0 text-[18px] font-bold leading-tight text-main-dark-green"
-              >
-                {experience.name}
-                <span className="capitalize ml-3 h-fit rounded-[30px] bg-banner px-3 py-[6px] text-[11px] font-semibold text-on-banner-text">
-                  {categoryLabel.charAt(0).toUpperCase() +
-                    categoryLabel.slice(1).toLowerCase()}
-                </span>
-              </Typography>
-            </div>
-
+      <div className="flex flex-1 flex-col gap-4 px-6 py-5">
+        <div className="flex w-full flex-col gap-2.5">
+          <div className="flex flex-wrap items-center gap-3">
             <Typography
-              variant="body"
-              className="text-dark-gray scrollbar-hide m-0 max-h-32 overflow-y-auto text-[14px] font-semibold"
+              variant="h3"
+              className="flex items-center p-0 text-[18px] font-bold leading-tight text-main-dark-green"
             >
-              {experience.description ?? ""}
+              {experience.name}
+              <span className="capitalize ml-3 h-fit rounded-[30px] bg-banner px-3 py-[6px] text-[11px] font-semibold text-on-banner-text">
+                {categoryLabel.charAt(0).toUpperCase() + categoryLabel.slice(1).toLowerCase()}
+              </span>
             </Typography>
           </div>
 
-          <div className="flex w-full flex-col gap-3 md:basis-[210px] md:max-w-[210px] md:flex-none md:self-stretch md:px-1 md:pr-3">
-            <div
-              className={`grid w-full grid-cols-1 gap-x-3 gap-y-2 ${labelsGridColsClass}`}
-            >
-              {labels.map(({ icon: Icon, text }, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-2 rounded-full bg-card-labels px-3 py-1.5"
-                >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-main-dark-green text-white">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                  <span className="text-[13px] font-semibold leading-tight text-foreground">
-                    {text}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <Typography
+            variant="body"
+            className="text-dark-gray scrollbar-hide m-0 max-h-32 w-full overflow-y-auto text-[14px] font-semibold"
+          >
+            {experience.description ?? ""}
+          </Typography>
         </div>
+
+        {detailLabels.length > 0 && (
+          <div className="grid w-full grid-cols-1 gap-x-3 gap-y-2 sm:grid-cols-2 md:grid-cols-3">
+            {detailLabels.map(({ icon: Icon, text }, idx) => (
+              <div
+                key={idx}
+                className="flex items-center gap-2 rounded-full bg-card-labels px-3 py-1.5"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-main-dark-green text-white">
+                  <Icon className="h-4 w-4" />
+                </span>
+                <span className="text-[13px] font-semibold leading-tight text-foreground">
+                  {text}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="pointer-events-none absolute inset-x-6 bottom-5 flex justify-end">
+      <div className="flex items-end justify-between gap-3 px-6 pb-5">
+        <div className="flex min-w-0 flex-col gap-2">
+          {[
+            { icon: Users, text: capacityLabel },
+            { icon: DollarSign, text: priceLabel },
+          ].map(({ icon: Icon, text }) => (
+            <div key={text} className="flex min-w-0 items-center gap-2">
+              <Icon className="h-4 w-4 shrink-0 text-main-dark-green" />
+              <span className="text-[13px] font-semibold leading-tight text-foreground">
+                {text}
+              </span>
+            </div>
+          ))}
+        </div>
+
         <Button
           label={addToCartLabel}
           data-testid="add-to-cart"
-          className="pointer-events-auto rounded-[100px] px-[24px] py-[12px] text-[14px]"
+          className="shrink-0 rounded-[100px] px-[24px] py-[12px] text-[14px]"
           onClick={() => {
             addItemToCart(experience);
             openCart();

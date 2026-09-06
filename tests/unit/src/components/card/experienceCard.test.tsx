@@ -105,10 +105,10 @@ const baseExperience: Experience = {
 };
 
 const withUnsafeCategory = (category: string): Experience =>
-  ({ ...baseExperience, category } as unknown as Experience);
+  ({ ...baseExperience, category }) as unknown as Experience;
 
 const withUnsafeDifficulty = (trailDifficulty: string | null): Experience =>
-  ({ ...baseExperience, trailDifficulty } as unknown as Experience);
+  ({ ...baseExperience, trailDifficulty }) as unknown as Experience;
 
 const buildExperience = (overrides: Partial<Experience>): Experience => ({
   ...baseExperience,
@@ -133,18 +133,28 @@ describe("CardExperience", () => {
     expect(screen.getByText(/R\$/)).toBeInTheDocument();
   });
 
-  it("mostra o intervalo de pessoas quando a capacidade mínima é maior que 1", () => {
+  it("mostra o intervalo entre as capacidades mínima e máxima", () => {
     renderWithClient(
       <CardExperience experience={buildExperience({ minCapacity: 3, capacity: 38 })} />,
     );
-    expect(screen.getByText("3 a 38 pessoas")).toBeInTheDocument();
+    expect(screen.getByText("3 - 38 pessoas")).toBeInTheDocument();
   });
 
-  it("mostra apenas a capacidade máxima quando a mínima é 1", () => {
+  it("mantém o intervalo quando a capacidade mínima é 1", () => {
     renderWithClient(
       <CardExperience experience={buildExperience({ minCapacity: 1, capacity: 38 })} />,
     );
-    expect(screen.getByText("38 pessoas")).toBeInTheDocument();
+    expect(screen.getByText("1 - 38 pessoas")).toBeInTheDocument();
+  });
+
+  it("mostra o intervalo entre os preços mínimo e máximo", () => {
+    renderWithClient(
+      <CardExperience experience={buildExperience({ price: 120, priceMax: 500 })} />,
+    );
+
+    expect(
+      screen.getByText((text) => text.includes("120,00") && text.includes("500,00")),
+    ).toBeInTheDocument();
   });
 
   it("aciona addItem e openCart ao clicar no botão", async () => {
@@ -172,16 +182,12 @@ describe("CardExperience", () => {
   });
 
   it("categoria CUSTOM usa fallback visível", () => {
-    renderWithClient(
-      <CardExperience experience={withUnsafeCategory("CUSTOM")} />,
-    );
+    renderWithClient(<CardExperience experience={withUnsafeCategory("CUSTOM")} />);
     expect(screen.getByText(/Custom/i)).toBeInTheDocument();
   });
 
   it("categoria desconhecida usa nome cru", () => {
-    renderWithClient(
-      <CardExperience experience={withUnsafeCategory("UNKNOWN")} />,
-    );
+    renderWithClient(<CardExperience experience={withUnsafeCategory("UNKNOWN")} />);
     expect(screen.getByText(/unknown/i)).toBeInTheDocument();
   });
 
@@ -225,9 +231,7 @@ describe("CardExperience", () => {
   });
 
   it("dificuldade desconhecida não mostra label", () => {
-    renderWithClient(
-      <CardExperience experience={withUnsafeDifficulty("UNKNOWN")} />,
-    );
+    renderWithClient(<CardExperience experience={withUnsafeDifficulty("UNKNOWN")} />);
     expect(screen.queryByText(/Fácil|Médi|Moderad|Difícil|Extrem/i)).toBeNull();
   });
 
@@ -287,7 +291,7 @@ describe("CardExperience", () => {
     expect(screen.queryByText(/jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez/i)).toBeNull();
   });
 
-  it("rótulos emenda layout empilhado quando apenas capacidade e preço estão visíveis", () => {
+  it("não cria grade de detalhes quando apenas capacidade e preço estão visíveis", () => {
     const { container } = renderWithClient(
       <CardExperience
         experience={buildExperience({
@@ -299,11 +303,9 @@ describe("CardExperience", () => {
       />,
     );
 
-    const grid = container.querySelector(
-      ".grid.w-full.grid-cols-1.gap-x-3.gap-y-2.md\\:grid-cols-1",
-    );
+    const grid = container.querySelector(".grid.w-full.grid-cols-1.gap-x-3.gap-y-2");
 
-    expect(grid).not.toBeNull();
+    expect(grid).toBeNull();
   });
 
   it("en-US: traduz categoria para 'Trails'", async () => {
@@ -438,7 +440,9 @@ describe("CardExperience", () => {
     );
 
     renderWithClient(
-      <CardWithTranslatedKey experience={{ ...baseExperience, category: ExperienceCategoryCard.TRAIL }} />,
+      <CardWithTranslatedKey
+        experience={{ ...baseExperience, category: ExperienceCategoryCard.TRAIL }}
+      />,
     );
 
     // since translateExperienceCategory returned 'Common.trail', it should use fallback map for pt-BR
@@ -480,9 +484,7 @@ describe("CardExperience", () => {
       Typography: ({ children }: any) => <span>{children}</span>,
     }));
 
-    const { CardExperience: CardUndefinedLang } = await import(
-      "@/components/card/experienceCard"
-    );
+    const { CardExperience: CardUndefinedLang } = await import("@/components/card/experienceCard");
 
     renderWithClient(<CardUndefinedLang experience={{ ...baseExperience, capacity: 5 }} />);
 
@@ -530,11 +532,11 @@ describe("CardExperience", () => {
       Typography: ({ children }: { children: ReactNode }) => <span>{children}</span>,
     }));
 
-    const { CardExperience: CardTranslated } = await import(
-      "@/components/card/experienceCard"
-    );
+    const { CardExperience: CardTranslated } = await import("@/components/card/experienceCard");
 
-    renderWithClient(<CardTranslated experience={{ ...baseExperience, category: ExperienceCategoryCard.TRAIL }} />);
+    renderWithClient(
+      <CardTranslated experience={{ ...baseExperience, category: ExperienceCategoryCard.TRAIL }} />,
+    );
 
     // 'EXTRA' should be normalized and displayed as 'Extra'
     expect(screen.getByText(/Extra/i)).toBeInTheDocument();
@@ -578,9 +580,7 @@ describe("CardExperience", () => {
     const { CardExperience: CardFallbacks } = await import("@/components/card/experienceCard");
 
     renderWithClient(
-      <CardFallbacks
-        experience={{ ...baseExperience, trailLength: 3, durationMinutes: 120 }}
-      />,
+      <CardFallbacks experience={{ ...baseExperience, trailLength: 3, durationMinutes: 120 }} />,
     );
 
     // fallback should render formatted units when translation keys are returned
@@ -630,27 +630,30 @@ describe("CardExperience", () => {
     expect(img).toHaveClass("opacity-100");
   });
 
-  it("trail layout uses two columns when many labels are visible", () => {
+  it("trail layout uses three columns when many detail labels are visible", () => {
     // reuse existing default mocks at top of file
     renderWithClient(<CardExperience experience={baseExperience} />);
 
-    const grid = document.querySelector(
-      ".grid.w-full.grid-cols-1.gap-x-3.gap-y-2.md\\:grid-cols-2",
-    );
+    const grid = document.querySelector(".grid.w-full.grid-cols-1.md\\:grid-cols-3");
 
     expect(grid).not.toBeNull();
   });
 
-  it("event layout forces stacked labels (md:grid-cols-1)", () => {
+  it("event layout uses the full-width details grid", () => {
     renderWithClient(
       <CardExperience
-        experience={{ ...baseExperience, category: ExperienceCategoryCard.EVENT, trailLength: null, durationMinutes: null, trailDifficulty: null, startDate: "2024-06-01" }}
+        experience={{
+          ...baseExperience,
+          category: ExperienceCategoryCard.EVENT,
+          trailLength: null,
+          durationMinutes: null,
+          trailDifficulty: null,
+          startDate: "2024-06-01",
+        }}
       />,
     );
 
-    const grid = document.querySelector(
-      ".grid.w-full.grid-cols-1.gap-x-3.gap-y-2.md\\:grid-cols-1",
-    );
+    const grid = document.querySelector(".grid.w-full.grid-cols-1.md\\:grid-cols-3");
 
     expect(grid).not.toBeNull();
   });
@@ -734,7 +737,7 @@ it("fallback i18n: capacity usa 'pessoas' quando language é pt-BR", async () =>
   const { CardExperience: CardFallbackPT } = await import("@/components/card/experienceCard");
 
   renderWithClient(<CardFallbackPT experience={{ ...baseExperience, capacity: 8 }} />);
-  expect(screen.getByText("8 pessoas")).toBeInTheDocument();
+  expect(screen.getByText("1 - 8 pessoas")).toBeInTheDocument();
 });
 
 it("fallback i18n: capacity usa 'people' quando language é en-US", async () => {
@@ -774,7 +777,7 @@ it("fallback i18n: capacity usa 'people' quando language é en-US", async () => 
   const { CardExperience: CardFallbackEN } = await import("@/components/card/experienceCard");
 
   renderWithClient(<CardFallbackEN experience={{ ...baseExperience, capacity: 8 }} />);
-  expect(screen.getByText("8 people")).toBeInTheDocument();
+  expect(screen.getByText("1 - 8 people")).toBeInTheDocument();
 });
 
 describe("translateExperienceCategory", () => {
@@ -785,11 +788,7 @@ describe("translateExperienceCategory", () => {
   it("retorna tradução do mapa base quando disponível", () => {
     const translator = buildTranslator({ "common.trail": "Trilhas" });
 
-    const result = translateExperienceCategory(
-      ExperienceCategory.TRILHA,
-      translator,
-      "fallback",
-    );
+    const result = translateExperienceCategory(ExperienceCategory.TRILHA, translator, "fallback");
 
     expect(result).toBe("Trilhas");
   });
@@ -931,7 +930,8 @@ describe("MSW handlers", () => {
   });
 
   it("autoriza credenciais válidas no login", async () => {
-    const resolveLogin = getResolver<(args: { request: Request }) => Promise<Response>>(loginHandler);
+    const resolveLogin =
+      getResolver<(args: { request: Request }) => Promise<Response>>(loginHandler);
     const okRequest = new Request("https://promata.dev/auth/login", {
       method: "POST",
       body: JSON.stringify({ email: "admin@promata.com.br", password: "password" }),
@@ -944,7 +944,8 @@ describe("MSW handlers", () => {
   });
 
   it("nega acesso com credenciais inválidas", async () => {
-    const resolveLogin = getResolver<(args: { request: Request }) => Promise<Response>>(loginHandler);
+    const resolveLogin =
+      getResolver<(args: { request: Request }) => Promise<Response>>(loginHandler);
     const badRequest = new Request("https://promata.dev/auth/login", {
       method: "POST",
       body: JSON.stringify({ email: "user@promata.com.br", password: "wrong" }),
