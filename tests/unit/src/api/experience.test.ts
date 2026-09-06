@@ -81,7 +81,10 @@ describe("src/api/experience", () => {
       experienceCategory: "TRAIL" as unknown as CreateExperiencePayload["experienceCategory"],
       experienceMinCapacity: 2,
       experienceCapacity: 12,
-      experienceImage: new File(["content"], "image.png", { type: "image/png" }),
+      experienceImages: [
+        new File(["content"], "image.png", { type: "image/png" }),
+        new File(["other"], "second.png", { type: "image/png" }),
+      ],
       experienceStartDate: new Date("2024-03-01T00:00:00.000Z"),
       experienceEndDate: new Date("2024-03-02T00:00:00.000Z"),
       experiencePrice: 55,
@@ -100,7 +103,7 @@ describe("src/api/experience", () => {
     );
 
     const callFormData = (postSpy.mock.calls[0] as unknown[])[1] as FormDataStub;
-
+    expect(callFormData.getAll("images")).toEqual(payload.experienceImages);
     expect(callFormData.getAll("experienceName")).toEqual(["Trilha X"]);
     expect(callFormData.getAll("experienceMinCapacity")).toEqual(["2"]);
     expect(callFormData.getAll("experienceCapacity")).toEqual(["12"]);
@@ -126,7 +129,7 @@ describe("src/api/experience", () => {
       experienceCategory: "TRAIL" as unknown as CreateExperiencePayload["experienceCategory"],
       experienceMinCapacity: 1,
       experienceCapacity: 5,
-      experienceImage: new File(["file"], "image.png", { type: "image/png" }),
+      experienceImages: [new File(["file"], "image.png", { type: "image/png" })],
       experienceWeekDays: [],
     };
 
@@ -189,7 +192,10 @@ describe("src/api/experience", () => {
       experienceCategory: "TRAIL" as unknown as UpdateExperiencePayload["experienceCategory"],
       experienceMinCapacity: "3",
       experienceCapacity: "12",
-      experienceImage: new File(["new"], "new.png", { type: "image/png" }),
+      experienceImages: [
+        "https://cdn.example.com/kept.png",
+        new File(["new"], "new.png", { type: "image/png" }),
+      ],
       experienceStartDate: new Date("2024-04-01T00:00:00.000Z"),
       experienceEndDate: "2024-05-01T00:00:00.000Z",
       experiencePrice: "100",
@@ -209,7 +215,8 @@ describe("src/api/experience", () => {
 
     const formData = (patchSpy.mock.calls[0] as unknown[])[1] as FormDataStub;
 
-    expect(formData.getAll("image")).toHaveLength(1);
+    expect(formData.getAll("images")).toHaveLength(1);
+    expect(formData.getAll("experienceImageUrls")).toEqual(["https://cdn.example.com/kept.png"]);
     expect(formData.getAll("experienceMinCapacity")).toEqual(["3"]);
     expect(formData.getAll("experienceCapacity")).toEqual(["12"]);
     expect(formData.getAll("experienceStartDate")).toEqual([
@@ -256,7 +263,7 @@ describe("src/api/experience", () => {
       experienceCategory: "TRAIL" as unknown as UpdateExperiencePayload["experienceCategory"],
       experienceMinCapacity: "1",
       experienceCapacity: "8",
-      experienceImage: "existing.png",
+      experienceImages: ["existing.png"],
       experiencePrice: "45",
       experienceWeekDays: [],
     };
@@ -265,7 +272,8 @@ describe("src/api/experience", () => {
 
     const formData = (patchSpy.mock.calls[0] as unknown[])[1] as FormDataStub;
 
-    expect(formData.getAll("image")).toHaveLength(0);
+    expect(formData.getAll("images")).toHaveLength(0);
+    expect(formData.getAll("experienceImageUrls")).toEqual(["existing.png"]);
     expect(formData.getAll("experienceStartDate")).toHaveLength(0);
     expect(formData.getAll("experienceEndDate")).toHaveLength(0);
     expect(formData.getAll("experienceWeekDays")).toHaveLength(0);

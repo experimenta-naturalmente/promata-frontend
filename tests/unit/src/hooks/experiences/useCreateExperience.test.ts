@@ -77,7 +77,7 @@ runDescribe("useCreateExperience", () => {
       experienceCategory: ExperienceCategory.EVENTO,
       experienceMinCapacity: 2,
       experienceCapacity: 10,
-      experienceImage: new File([""], "img.png"),
+      experienceImages: [new File([""], "img.png")],
       experienceWeekDays: ["mon"],
     };
 

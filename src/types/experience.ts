@@ -71,6 +71,7 @@ export interface ExperienceApiResponse {
   minCapacity?: RawNumber;
   capacity?: RawNumber;
   image?: ExperienceApiImage;
+  images?: ExperienceApiImage[] | null;
   startDate?: string | null;
   endDate?: string | null;
   price?: RawNumber;
@@ -89,6 +90,7 @@ export interface ExperienceApiResponse {
   experienceMinCapacity?: RawNumber;
   experienceCapacity?: RawNumber;
   experienceImage?: ExperienceApiImage;
+  experienceImages?: ExperienceApiImage[] | null;
   experienceStartDate?: string | null;
   experienceEndDate?: string | null;
   experiencePrice?: RawNumber;
@@ -113,6 +115,7 @@ export interface ExperienceDTO {
   trailDifficulty?: TrailDifficulty | null;
   trailLength?: number | null;
   image?: { url: string } | null;
+  images?: { url: string }[];
   imageId?: string | null;
   active?: boolean | null;
 }
@@ -192,6 +195,21 @@ const mapImage = (image: ExperienceApiImage): { url: string } | null => {
   return { url: resolveImageUrl(rawUrl) };
 };
 
+const mapGallery = (
+  images: ExperienceApiImage[] | null | undefined,
+  cover: { url: string } | null,
+): { url: string }[] => {
+  const mapped = (images ?? [])
+    .map(mapImage)
+    .filter((image): image is { url: string } => image !== null);
+
+  if (mapped.length > 0) {
+    return mapped;
+  }
+
+  return cover ? [cover] : [];
+};
+
 const toBooleanOrNull = (value: unknown): boolean | null => {
   if (typeof value === "boolean") {
     return value;
@@ -221,6 +239,7 @@ export const mapExperienceApiResponseToDTO = (apiExperience: ExperienceApiRespon
 
   const id = apiExperience.id ?? apiExperience.experienceId ?? "unknown";
   const name = apiExperience.name ?? apiExperience.experienceName ?? "";
+  const image = mapImage(apiExperience.image ?? apiExperience.experienceImage);
 
   return {
     id,
@@ -239,7 +258,8 @@ export const mapExperienceApiResponseToDTO = (apiExperience: ExperienceApiRespon
     ),
     trailDifficulty: apiExperience.trailDifficulty ?? null,
     trailLength: toNumberOrNull(apiExperience.trailLength),
-    image: mapImage(apiExperience.image ?? apiExperience.experienceImage),
+    image,
+    images: mapGallery(apiExperience.images ?? apiExperience.experienceImages, image),
     imageId: null,
     active: toBooleanOrNull(apiExperience.active ?? apiExperience.experienceActive ?? null),
   };

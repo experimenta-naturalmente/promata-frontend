@@ -16,7 +16,7 @@ export interface CreateExperiencePayload {
   experienceCategory: ExperienceCategory;
   experienceMinCapacity: number;
   experienceCapacity: number;
-  experienceImage: File;
+  experienceImages: File[];
   experienceStartDate?: Date;
   experienceEndDate?: Date;
   experiencePrice?: number;
@@ -34,7 +34,10 @@ export async function createExperience(payload: CreateExperiencePayload) {
   formData.append("experienceCategory", payload.experienceCategory);
   formData.append("experienceMinCapacity", payload.experienceMinCapacity.toString());
   formData.append("experienceCapacity", payload.experienceCapacity.toString());
-  formData.append("image", payload.experienceImage);
+
+  payload.experienceImages.forEach((image) => {
+    formData.append("images", image);
+  });
 
   if (payload.experienceStartDate) {
     formData.append("experienceStartDate", payload.experienceStartDate.toISOString());
@@ -136,7 +139,7 @@ export interface UpdateExperiencePayload {
   experienceCategory: ExperienceCategory;
   experienceMinCapacity: string;
   experienceCapacity: string;
-  experienceImage?: File | string;
+  experienceImages?: (File | string)[];
   experienceStartDate?: Date | string;
   experienceEndDate?: Date | string;
   experiencePrice: string;
@@ -156,8 +159,15 @@ export async function updateExperience(experienceId: string, payload: UpdateExpe
   formData.append("experienceCapacity", payload.experienceCapacity);
   formData.append("experiencePrice", payload.experiencePrice);
 
-  if (payload.experienceImage instanceof File) {
-    formData.append("image", payload.experienceImage);
+  // URLs identificam as fotos já salvas que devem permanecer; arquivos são as novas.
+  if (payload.experienceImages) {
+    payload.experienceImages.forEach((image) => {
+      if (image instanceof File) {
+        formData.append("images", image);
+      } else {
+        formData.append("experienceImageUrls", image);
+      }
+    });
   }
 
   if (payload.experienceStartDate) {

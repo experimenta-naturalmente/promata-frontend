@@ -30,16 +30,20 @@ import {
   Calendar,
   CalendarIcon,
   FlaskConical,
+  ImagePlus,
   Mountain,
   Upload,
+  X,
 } from "lucide-react";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Cropper, { type Area } from "react-easy-crop";
 import Modal from "@/components/ui/modal";
 import getCroppedImg from "@/utils/cropImage";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useCreateExperience, useLoadImage } from "@/hooks";
+import { useCreateExperience } from "@/hooks";
+
+const MAX_IMAGES = 10;
 
 const formSchema = z
   .object({
@@ -48,9 +52,10 @@ const formSchema = z
     experienceCategory: z.nativeEnum(ExperienceCategory),
     experienceMinCapacity: z.coerce.number().min(1, "Informe a quantidade mínima de pessoas"),
     experienceCapacity: z.coerce.number().min(1, "Informe a quantidade máxima de pessoas"),
-    experienceImage: z.instanceof(File, {
-      message: "Selecione uma imagem para a experiência",
-    }),
+    experienceImages: z
+      .array(z.instanceof(File))
+      .min(1, "Selecione ao menos uma imagem para a experiência")
+      .max(MAX_IMAGES, `Selecione no máximo ${MAX_IMAGES} imagens`),
     experienceStartDate: z.date().optional(),
     experienceEndDate: z.date().optional(),
     experiencePrice: z.coerce.number().optional(),
@@ -163,10 +168,12 @@ const parsePrice = (formattedValue: string) => {
 
 export function CreateExperience() {
   const { mutate } = useCreateExperience();
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  useLoadImage(imagePreview || "");
-  const [cropModalOpen, setCropModalOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  // Cada arquivo escolhido passa pelo corte antes de entrar na galeria, um por vez.
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [cropSource, setCropSource] = useState<string | null>(null);
+  const [isReadingFile, setIsReadingFile] = useState(false);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const previewsRef = useRef<string[]>([]);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
@@ -181,6 +188,7 @@ export function CreateExperience() {
       experienceCategory: ExperienceCategory.LABORATORIO,
       experienceMinCapacity: 1,
       experienceCapacity: 1,
+      experienceImages: [],
       experienceStartDate: undefined,
       experienceEndDate: undefined,
       experiencePrice: undefined,
@@ -238,21 +246,68 @@ export function CreateExperience() {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        appToast.error("Por favor, selecione apenas arquivos de imagem.");
-        return;
-      }
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setImagePreview(ev.target?.result as string);
-        setCropModalOpen(true);
-      };
-      reader.readAsDataURL(file);
+  useEffect(() => {
+    previewsRef.current = previews;
+  }, [previews]);
+
+  useEffect(
+    () => () => {
+      previewsRef.current.forEach((preview) => URL.revokeObjectURL(preview));
+    },
+    [],
+  );
+
+  // Puxa o próximo arquivo da fila assim que o corte anterior é resolvido.
+  useEffect(() => {
+    if (cropSource || isReadingFile || pendingFiles.length === 0) {
+      return;
     }
+
+    const [next, ...rest] = pendingFiles;
+    const reader = new FileReader();
+
+    setIsReadingFile(true);
+    reader.onload = (ev) => {
+      setCropSource(ev.target?.result as string);
+      setPendingFiles(rest);
+      setIsReadingFile(false);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+    };
+    reader.readAsDataURL(next);
+  }, [pendingFiles, cropSource, isReadingFile]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+
+    // Permite reescolher o mesmo arquivo depois de removê-lo da galeria.
+    e.target.value = "";
+
+    if (files.length === 0) {
+      return;
+    }
+
+    const images = files.filter((file) => file.type.startsWith("image/"));
+
+    if (images.length < files.length) {
+      appToast.error("Por favor, selecione apenas arquivos de imagem.");
+    }
+
+    const alreadyTaken =
+      (form.getValues("experienceImages") ?? []).length + pendingFiles.length + (cropSource ? 1 : 0);
+    const availableSlots = MAX_IMAGES - alreadyTaken;
+
+    if (availableSlots <= 0) {
+      appToast.error(`A experiência pode ter no máximo ${MAX_IMAGES} imagens.`);
+
+      return;
+    }
+
+    if (images.length > availableSlots) {
+      appToast.error(`A experiência pode ter no máximo ${MAX_IMAGES} imagens.`);
+    }
+
+    setPendingFiles((queue) => [...queue, ...images.slice(0, availableSlots)]);
   };
 
   const onCropComplete = useCallback((_croppedArea: Area, croppedPixels: Area) => {
@@ -260,12 +315,33 @@ export function CreateExperience() {
   }, []);
 
   const handleCropSave = useCallback(async () => {
-    if (!imagePreview || !croppedAreaPixels || !selectedImage) return;
-    const croppedFile = await getCroppedImg(imagePreview, croppedAreaPixels, 400, 200);
-    form.setValue("experienceImage", croppedFile);
-    setImagePreview(URL.createObjectURL(croppedFile));
-    setCropModalOpen(false);
-  }, [imagePreview, croppedAreaPixels, selectedImage, form]);
+    if (!cropSource || !croppedAreaPixels) return;
+
+    const croppedFile = await getCroppedImg(cropSource, croppedAreaPixels, 400, 200);
+
+    form.setValue("experienceImages", [...(form.getValues("experienceImages") ?? []), croppedFile], {
+      shouldValidate: true,
+    });
+    setPreviews((current) => [...current, URL.createObjectURL(croppedFile)]);
+    setCropSource(null);
+  }, [cropSource, croppedAreaPixels, form]);
+
+  const handleCropSkip = useCallback(() => {
+    setCropSource(null);
+  }, []);
+
+  const handleRemoveImage = (index: number) => {
+    form.setValue(
+      "experienceImages",
+      (form.getValues("experienceImages") ?? []).filter((_, position) => position !== index),
+      { shouldValidate: true },
+    );
+    setPreviews((current) => {
+      URL.revokeObjectURL(current[index]);
+
+      return current.filter((_, position) => position !== index);
+    });
+  };
 
   const submitForm = form.handleSubmit((data) => {
     const payload: CreateExperiencePayload = {
@@ -300,46 +376,80 @@ export function CreateExperience() {
         <form className="space-y-6" onSubmit={handleFormSubmit}>
           <FormField
             control={form.control}
-            name="experienceImage"
+            name="experienceImages"
             render={() => (
               <FormItem>
                 <Typography className="font-medium text-foreground text-lg">
-                  Imagem da Experiência *
+                  Imagens da Experiência *
                 </Typography>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                   <input
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleImageUpload}
                     className="hidden"
                     id="image-upload"
                   />
-                  <label
-                    htmlFor="image-upload"
-                    className="cursor-pointer flex flex-col items-center gap-4"
+                  {previews.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                      {previews.map((preview, index) => (
+                        <div
+                          key={preview}
+                          className="group relative aspect-[2/1] overflow-hidden rounded-lg border"
+                        >
+                          <img
+                            src={preview}
+                            alt={`Imagem ${index + 1} da experiência`}
+                            className="h-full w-full object-cover"
+                          />
+                          {index === 0 && (
+                            <span className="absolute left-2 top-2 rounded-full bg-main-dark-green px-2 py-0.5 text-[11px] font-semibold text-white">
+                              Capa
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            aria-label={`Remover imagem ${index + 1}`}
+                            onClick={() => handleRemoveImage(index)}
+                            className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white transition-colors hover:bg-destructive"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                      {previews.length < MAX_IMAGES && (
+                        <label
+                          htmlFor="image-upload"
+                          className="flex aspect-[2/1] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 text-muted-foreground transition-colors hover:border-contrast-green hover:text-contrast-green"
+                        >
+                          <ImagePlus className="h-8 w-8" />
+                          <Typography className="text-sm font-medium">Adicionar imagem</Typography>
+                        </label>
+                      )}
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="image-upload"
+                      className="cursor-pointer flex flex-col items-center gap-4"
+                    >
+                      <Upload className="h-12 w-12 text-contrast-green" />
+                      <Typography className="text-lg font-medium text-foreground">
+                        SELECIONE UMA OU MAIS IMAGENS
+                      </Typography>
+                    </label>
+                  )}
+                  <Modal
+                    open={cropSource !== null}
+                    onOpenChange={(open) => {
+                      if (!open) handleCropSkip();
+                    }}
+                    title="Cortar imagem"
                   >
-                    {imagePreview ? (
-                      <div className="relative max-w-full max-h-48">
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          className="max-w-full max-h-48 object-cover rounded-lg transition-opacity duration-300"
-                        />
-                      </div>
-                    ) : (
-                      <>
-                        <Upload className="h-12 w-12 text-contrast-green" />
-                        <Typography className="text-lg font-medium text-foreground">
-                          SELECIONE UMA IMAGEM
-                        </Typography>
-                      </>
-                    )}
-                  </label>
-                  <Modal open={cropModalOpen} onOpenChange={setCropModalOpen} title="Cortar imagem">
                     <div style={{ position: "relative", width: 400, height: 200, background: "#333" }}>
-                      {imagePreview && (
+                      {cropSource && (
                         <Cropper
-                          image={imagePreview}
+                          image={cropSource}
                           crop={crop}
                           zoom={zoom}
                           aspect={2}
@@ -351,21 +461,24 @@ export function CreateExperience() {
                         />
                       )}
                     </div>
+                    {pendingFiles.length > 0 && (
+                      <Typography className="mt-2 text-sm text-muted-foreground">
+                        {pendingFiles.length} imagem(ns) aguardando corte
+                      </Typography>
+                    )}
                     <div className="flex gap-4 mt-4 justify-end">
-                      <Button
-                        type="button"
-                        label="Cancelar"
-                        onClick={() => setCropModalOpen(false)}
-                      />
+                      <Button type="button" label="Descartar imagem" onClick={handleCropSkip} />
                       <Button
                         type="button"
                         label="Salvar corte"
-                        onClick={handleCropSave}
+                        onClick={() => void handleCropSave()}
                       />
                     </div>
                   </Modal>
                   <Typography className="text-sm text-muted-foreground mt-2">
-                    Sua imagem será cortada e redimensionada automaticamente para 400x200, nos formatos .PNG, .JPG e .JPEG. Não há limite de tamanho.
+                    Até {MAX_IMAGES} imagens, cortadas e redimensionadas automaticamente para
+                    400x200, nos formatos .PNG, .JPG e .JPEG. A primeira é a capa e as demais se
+                    alternam no card da experiência.
                   </Typography>
                 </div>
                 <FormMessage className="text-red-500" />

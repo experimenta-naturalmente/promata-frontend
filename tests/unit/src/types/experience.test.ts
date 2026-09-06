@@ -55,10 +55,43 @@ describe("mapExperienceApiResponseToDTO", () => {
       durationMinutes: 180,
       trailDifficulty: "HEAVY",
       trailLength: 2,
+      priceMax: null,
       image: { url: "cdn/pictures/main.png" },
+      images: [{ url: "cdn/pictures/main.png" }],
       imageId: null,
       active: true,
     });
+  });
+
+  it("maps the ordered gallery and keeps the cover as the first entry", async () => {
+    vi.doMock("@/utils/resolveImageUrl", () => ({
+      resolveImageUrl: (raw: string) => `cdn/${raw}`,
+    }));
+
+    const { mapExperienceApiResponseToDTO } = await import("@/types/experience");
+
+    const api = {
+      id: "exp-gallery",
+      name: "Gallery",
+      category: "TRAIL",
+      image: { url: "pictures/cover.png" },
+      images: [
+        { url: "pictures/cover.png" },
+        "pictures/second.png",
+        { url: null },
+        null,
+        { url: "pictures/third.png" },
+      ],
+    };
+
+    const dto = mapExperienceApiResponseToDTO(api as unknown as ExperienceApiResponse);
+
+    expect(dto.image).toEqual({ url: "cdn/pictures/cover.png" });
+    expect(dto.images).toEqual([
+      { url: "cdn/pictures/cover.png" },
+      { url: "cdn/pictures/second.png" },
+      { url: "cdn/pictures/third.png" },
+    ]);
   });
 
   it("falls back to prefixed fields when GET fields are absent", async () => {
@@ -109,7 +142,9 @@ describe("mapExperienceApiResponseToDTO", () => {
       durationMinutes: 45,
       trailDifficulty: null,
       trailLength: 10,
+      priceMax: null,
       image: { url: "cdn/legacy/banner.jpg" },
+      images: [{ url: "cdn/legacy/banner.jpg" }],
       imageId: null,
       active: false,
     });
@@ -210,7 +245,9 @@ describe("mapExperienceApiResponseToDTO", () => {
       durationMinutes: null,
       trailDifficulty: null,
       trailLength: null,
+      priceMax: null,
       image: null,
+      images: [],
       imageId: null,
       active: null,
     });
