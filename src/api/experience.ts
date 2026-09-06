@@ -3,7 +3,6 @@ import {
   type Experience,
   type ExperienceApiResponse,
   ExperienceCategory,
-  type ExperienceDTO,
   mapExperienceApiResponseToDTO,
 } from "@/types/experience";
 import type { TApiPaginationResult } from "@/entities/api-pagination-response";
