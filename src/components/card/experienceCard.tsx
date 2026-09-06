@@ -269,7 +269,9 @@ export function CardExperience({ experience }: CardExperienceProps) {
             { icon: DollarSign, text: priceLabel },
           ].map(({ icon: Icon, text }) => (
             <div key={text} className="flex min-w-0 items-center gap-2">
-              <Icon className="h-4 w-4 shrink-0 text-main-dark-green" />
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-main-dark-green text-white">
+                <Icon className="h-4 w-4" />
+              </span>
               <span className="text-[13px] font-semibold leading-tight text-foreground">
                 {text}
               </span>
