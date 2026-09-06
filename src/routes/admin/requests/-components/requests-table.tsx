@@ -26,6 +26,7 @@ import { useDeleteReservation } from "@/hooks/reservations/useDeleteReservation"
 
 const PLACE_HOLDER_TRANSLATE_TEXT = {
   experiences: "requests.admin.filters.experiences",
+  name: "requests.admin.filters.name",
   email: "requests.admin.filters.email",
 } as const;
 
@@ -104,6 +105,11 @@ export default function ReservationRequestsTable() {
 
         return Array.isArray(value) ? value.join(", ") : String(value ?? "");
       },
+    },
+    {
+      accessorKey: "name",
+      header: t("requests.admin.filters.name"),
+      enableSorting: false,
     },
     {
       accessorKey: "email",
@@ -191,6 +197,12 @@ export default function ReservationRequestsTable() {
               value="experiences"
             >
               {t("requests.admin.filters.experiences")}
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              className="border-1 h-12 !rounded-full !w-auto data-[state=on]:bg-contrast-green data-[state=on]:text-white"
+              value="name"
+            >
+              {t("requests.admin.filters.name")}
             </ToggleGroupItem>
             <ToggleGroupItem
               className="border-1 h-12 !rounded-full !w-auto data-[state=on]:bg-contrast-green data-[state=on]:text-white"
