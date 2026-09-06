@@ -216,3 +216,44 @@ describe("mapExperienceApiResponseToDTO", () => {
     });
   });
 });
+
+describe("toExperienceCategory", () => {
+  it("maps API category values to form enum", async () => {
+    const { ExperienceCategory, toExperienceCategory } = await import(
+      "@/types/experience"
+    );
+
+    expect(toExperienceCategory("HOSTING")).toBe(ExperienceCategory.HOSPEDAGEM);
+    expect(toExperienceCategory("LABORATORY")).toBe(ExperienceCategory.LABORATORIO);
+    expect(toExperienceCategory("TRAIL")).toBe(ExperienceCategory.TRILHA);
+    expect(toExperienceCategory("EVENT")).toBe(ExperienceCategory.EVENTO);
+  });
+
+  it("maps legacy card category values to form enum", async () => {
+    const { ExperienceCategory, ExperienceCategoryCard, toExperienceCategory } =
+      await import("@/types/experience");
+
+    expect(toExperienceCategory(ExperienceCategoryCard.ROOM)).toBe(
+      ExperienceCategory.HOSPEDAGEM,
+    );
+    expect(toExperienceCategory(ExperienceCategoryCard.LAB)).toBe(
+      ExperienceCategory.LABORATORIO,
+    );
+    expect(toExperienceCategory(ExperienceCategoryCard.TRAIL)).toBe(
+      ExperienceCategory.TRILHA,
+    );
+    expect(toExperienceCategory(ExperienceCategoryCard.EVENT)).toBe(
+      ExperienceCategory.EVENTO,
+    );
+  });
+
+  it("defaults to laboratório when category is missing or unknown", async () => {
+    const { ExperienceCategory, toExperienceCategory } = await import(
+      "@/types/experience"
+    );
+
+    expect(toExperienceCategory(undefined)).toBe(ExperienceCategory.LABORATORIO);
+    expect(toExperienceCategory(null)).toBe(ExperienceCategory.LABORATORIO);
+    expect(toExperienceCategory("UNKNOWN")).toBe(ExperienceCategory.LABORATORIO);
+  });
+});

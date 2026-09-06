@@ -125,6 +125,38 @@ const CATEGORY_CARD_MAP: Record<ExperienceCategory, ExperienceCategoryCard> = {
   [ExperienceCategory.LABORATORIO]: ExperienceCategoryCard.LAB,
 };
 
+const CATEGORY_CARD_REVERSE_MAP: Record<ExperienceCategoryCard, ExperienceCategory> = {
+  [ExperienceCategoryCard.TRAIL]: ExperienceCategory.TRILHA,
+  [ExperienceCategoryCard.EVENT]: ExperienceCategory.EVENTO,
+  [ExperienceCategoryCard.ROOM]: ExperienceCategory.HOSPEDAGEM,
+  [ExperienceCategoryCard.LAB]: ExperienceCategory.LABORATORIO,
+};
+
+export const EXPERIENCE_CATEGORY_FORM_LABEL: Record<ExperienceCategory, string> = {
+  [ExperienceCategory.LABORATORIO]: "Laboratório",
+  [ExperienceCategory.TRILHA]: "Trilha",
+  [ExperienceCategory.HOSPEDAGEM]: "Hospedagem",
+  [ExperienceCategory.EVENTO]: "Evento",
+};
+
+export function toExperienceCategory(
+  category: string | ExperienceCategory | ExperienceCategoryCard | null | undefined,
+): ExperienceCategory {
+  if (!category) {
+    return ExperienceCategory.LABORATORIO;
+  }
+
+  if (Object.values(ExperienceCategory).includes(category as ExperienceCategory)) {
+    return category as ExperienceCategory;
+  }
+
+  if (category in CATEGORY_CARD_REVERSE_MAP) {
+    return CATEGORY_CARD_REVERSE_MAP[category as ExperienceCategoryCard];
+  }
+
+  return ExperienceCategory.LABORATORIO;
+}
+
 const toNumberOrNull = (value: RawNumber): number | null => {
   if (typeof value === "number") {
     return Number.isFinite(value) ? value : null;
@@ -182,7 +214,9 @@ const toBooleanOrNull = (value: unknown): boolean | null => {
 export const mapExperienceApiResponseToDTO = (apiExperience: ExperienceApiResponse): Experience => {
   // Prioriza campos sem prefixo (GET) e usa prefixo como fallback (POST/PATCH)
   const rawCategory = apiExperience.category ?? apiExperience.experienceCategory;
-  const category = rawCategory ? CATEGORY_CARD_MAP[rawCategory] : ExperienceCategoryCard.EVENT;
+  const category = rawCategory
+    ? CATEGORY_CARD_MAP[toExperienceCategory(rawCategory)]
+    : ExperienceCategoryCard.EVENT;
 
   const id = apiExperience.id ?? apiExperience.experienceId ?? "unknown";
   const name = apiExperience.name ?? apiExperience.experienceName ?? "";

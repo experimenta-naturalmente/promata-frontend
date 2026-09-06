@@ -19,7 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { ExperienceCategory } from "@/types/experience";
+import {
+  EXPERIENCE_CATEGORY_FORM_LABEL,
+  ExperienceCategory,
+  toExperienceCategory,
+} from "@/types/experience";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -219,14 +223,6 @@ export function EditExperience({ experienceId }: EditExperienceProps) {
   // Load experience data into form
   useEffect(() => {
     if (experience) {
-      // Map category back
-      const categoryMap: Record<string, ExperienceCategory> = {
-        TRAIL: ExperienceCategory.TRILHA,
-        EVENT: ExperienceCategory.EVENTO,
-        ROOM: ExperienceCategory.HOSPEDAGEM,
-        LAB: ExperienceCategory.LABORATORIO,
-      };
-
       // Set price display
       if (experience.price) {
         const priceInCents = experience.price * 100;
@@ -244,7 +240,7 @@ export function EditExperience({ experienceId }: EditExperienceProps) {
       form.reset({
         experienceName: experience.name,
         experienceDescription: experience.description || "",
-        experienceCategory: categoryMap[experience.category] || ExperienceCategory.LABORATORIO,
+        experienceCategory: toExperienceCategory(experience.category),
         experienceMinCapacity: String(experience.minCapacity || 1),
         experienceCapacity: String(experience.capacity || 1),
         experienceStartDate: experience.startDate || undefined,
@@ -460,47 +456,32 @@ export function EditExperience({ experienceId }: EditExperienceProps) {
                     <Typography className="text-foreground font-medium">
                       Tipo de experiência *
                     </Typography>
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select
+                      key={field.value}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o tipo">
                           {field.value && (
                             <div className="flex items-center gap-2">
                               {getCategoryIcon(field.value)}
                               <Typography>
-                                {field.value === ExperienceCategory.LABORATORIO && "Laboratório"}
-                                {field.value === ExperienceCategory.TRILHA && "Trilha"}
-                                {field.value === ExperienceCategory.HOSPEDAGEM && "Hospedagem"}
-                                {field.value === ExperienceCategory.EVENTO && "Evento"}
+                                {EXPERIENCE_CATEGORY_FORM_LABEL[field.value]}
                               </Typography>
                             </div>
                           )}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={ExperienceCategory.LABORATORIO}>
-                          <div className="flex items-center gap-2">
-                            <FlaskConical className="h-4 w-4" />
-                            Laboratório
-                          </div>
-                        </SelectItem>
-                        <SelectItem value={ExperienceCategory.TRILHA}>
-                          <div className="flex items-center gap-2">
-                            <Mountain className="h-4 w-4" />
-                            Trilha
-                          </div>
-                        </SelectItem>
-                        <SelectItem value={ExperienceCategory.HOSPEDAGEM}>
-                          <div className="flex items-center gap-2">
-                            <Bed className="h-4 w-4" />
-                            Hospedagem
-                          </div>
-                        </SelectItem>
-                        <SelectItem value={ExperienceCategory.EVENTO}>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            Evento
-                          </div>
-                        </SelectItem>
+                        {Object.values(ExperienceCategory).map((category) => (
+                          <SelectItem key={category} value={category}>
+                            <div className="flex items-center gap-2">
+                              {getCategoryIcon(category)}
+                              {EXPERIENCE_CATEGORY_FORM_LABEL[category]}
+                            </div>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
