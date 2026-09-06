@@ -8,6 +8,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { TUserAdminRequestFilters } from "@/entities/user-admin-filters";
 import { useFilters } from "@/hooks/filters/filters";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -17,12 +24,16 @@ import React, { type ChangeEvent, useState } from "react";
 import { MoonLoader } from "react-spinners";
 import { useDebounce, useDeleteUser, useFetchAdminUsers } from "@/hooks";
 import type { TUserAdminResponse } from "@/entities/user-admin-response";
+import type { UserType } from "@/types/user";
+import { USER_TYPE_LABEL, USER_TYPE_OPTIONS } from "@/utils/consts/user-consts";
 
 const PLACE_HOLDER_TRANSLATE_TEXT = {
   ["name"]: "Nome",
   ["email"]: "Email",
   ["createdBy"]: "Criador",
 } as const;
+
+const ALL_USER_TYPES = "ALL";
 
 type FilterKey = keyof typeof PLACE_HOLDER_TRANSLATE_TEXT;
 
@@ -37,6 +48,7 @@ function RouteComponent() {
   const {
     filters,
     setFilter,
+    setFilters,
     reset: resetFilters,
   } = useFilters<TUserAdminRequestFilters>({
     key: "get-admin-users",
@@ -64,8 +76,19 @@ function RouteComponent() {
 
   const onChangeFilter = (value: FilterKey) => {
     if (!value) return;
+    const { userType } = filters;
+
     resetFilters();
     setSelectedFilter(value);
+
+    if (userType) setFilter("userType", userType);
+  };
+
+  const onChangeUserType = (value: string) => {
+    setFilters({
+      userType: value === ALL_USER_TYPES ? undefined : (value as UserType),
+      page: 0,
+    });
   };
 
   const handleDeleteUserClick = async (id: string) => {
@@ -103,6 +126,16 @@ function RouteComponent() {
       enableSorting: true,
     },
     {
+      accessorKey: "userType",
+      header: "Tipo de usuário",
+      enableSorting: false,
+      cell: ({ row }: { row: { original: TUserAdminResponse } }) => {
+        const userType = row.original.userType;
+
+        return userType ? USER_TYPE_LABEL[userType] : "-";
+      },
+    },
+    {
       id: "actions",
       enableHiding: false,
       size: 50,
@@ -137,10 +170,10 @@ function RouteComponent() {
   return (
     <div className="flex flex-col w-full h-full p-4 gap-6 overflow-hidden">
       <div className="flex justify-between items-center lex-shrink-0">
-        <div className="w-full flex gap-4">
+        <div className="w-full flex gap-4 items-center">
           <Input
             value={searchTerm}
-            className="w-1/3 h-12"
+            className="w-1/4 h-12"
             placeholder={searchInputPlaceholder}
             onChange={onChangeSearch}
           />
@@ -148,7 +181,7 @@ function RouteComponent() {
             type="single"
             value={selectedFilter}
             onValueChange={onChangeFilter}
-            className="gap-2 w-1/2"
+            className="gap-2 w-auto"
           >
             <ToggleGroupItem
               className="border-1 h-12 !rounded-full !w-auto data-[state=on]:bg-contrast-green data-[state=on]:text-white"
@@ -169,6 +202,22 @@ function RouteComponent() {
               Email
             </ToggleGroupItem>
           </ToggleGroup>
+          <Select
+            value={filters.userType ?? ALL_USER_TYPES}
+            onValueChange={onChangeUserType}
+          >
+            <SelectTrigger className="w-56 !rounded-full border-1">
+              <SelectValue placeholder="Tipo de usuário" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_USER_TYPES}>Todos os tipos</SelectItem>
+              {USER_TYPE_OPTIONS.map(({ value, label }) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <Button
           onClick={navigateToCreateUser}

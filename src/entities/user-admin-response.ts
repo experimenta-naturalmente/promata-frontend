@@ -4,6 +4,7 @@ export const UserAdminResponse = z.object({
   id: z.string(),
   name: z.string().max(100).optional(),
   email: z.string().optional(),
+  userType: z.enum(["ADMIN", "ROOT", "GUEST", "PROFESSOR"]).optional(),
   createdBy: z.object({
     name: z.string().max(100).optional(),
     id: z.string().optional(),
