@@ -184,19 +184,19 @@ function RouteComponent() {
             className="gap-2 w-auto"
           >
             <ToggleGroupItem
-              className="border-1 h-12 !rounded-full !w-auto data-[state=on]:bg-contrast-green data-[state=on]:text-white"
+              className="border-1 h-12 !rounded-full !flex-none !w-44 data-[state=on]:bg-contrast-green data-[state=on]:text-white"
               value="name"
             >
               Nome
             </ToggleGroupItem>
             <ToggleGroupItem
-              className="border-1 h-12 !rounded-full !w-auto data-[state=on]:bg-contrast-green data-[state=on]:text-white"
+              className="border-1 h-12 !rounded-full !flex-none !w-44 data-[state=on]:bg-contrast-green data-[state=on]:text-white"
               value="createdBy"
             >
               Criado Por
             </ToggleGroupItem>
             <ToggleGroupItem
-              className="border-1 h-12 !rounded-full !w-auto data-[state=on]:bg-contrast-green data-[state=on]:text-white"
+              className="border-1 h-12 !rounded-full !flex-none !w-44 data-[state=on]:bg-contrast-green data-[state=on]:text-white"
               value="email"
             >
               Email
@@ -206,7 +206,7 @@ function RouteComponent() {
             value={filters.userType ?? ALL_USER_TYPES}
             onValueChange={onChangeUserType}
           >
-            <SelectTrigger className="w-56 !rounded-full border-1">
+            <SelectTrigger className="!w-44 shrink-0 !rounded-full border-1">
               <SelectValue placeholder="Tipo de usuário" />
             </SelectTrigger>
             <SelectContent>
