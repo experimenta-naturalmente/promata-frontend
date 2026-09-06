@@ -1,5 +1,6 @@
 import type { UserType } from "@/types/user";
 import z from "zod";
+import { type AxiosResponse, isAxiosError } from "axios";
 import type { HttpResponse } from "@/types/http-response";
 import { api } from "@/core/api";
 import { QueryClient, queryOptions, useQuery } from "@tanstack/react-query";
@@ -9,6 +10,8 @@ import {
   type TEditUserAdminResponse,
 } from "@/entities/edit-user-admin-response";
 import { safeApiCall } from "@/core/http/safe-api-caller";
+import { SessionUnavailableError } from "@/core/http/session-unavailable-error";
+import { AUTH_TOKEN_STORAGE_KEY } from "@/utils/consts/auth-consts";
 import { digitsOnly } from "@/lib/utils";
 
 export function mapGenderToApiValue(value?: string | null): string | undefined {
@@ -242,48 +245,89 @@ export async function resetPasswordRequest(payload: ResetPasswordPayload): Promi
   };
 }
 
+const profileAddressSchema = z
+  .object({
+    street: z.string().nullish(),
+    number: z.string().nullish(),
+    city: z.string().nullish(),
+    zip: z.string().nullish(),
+    country: z.string().nullish(),
+    updatedAt: z.iso.datetime({ offset: true }).nullish(),
+  })
+  .nullish();
+
+const profileSchema = z.object({
+  userType: z.custom<UserType>(),
+  name: z.string(),
+  email: z.email().nullish(),
+  phone: z.string().nullish(),
+  document: z.string().nullish(),
+  gender: z.string().nullish(),
+  rg: z.string().nullish(),
+  institution: z.string().nullish(),
+  isForeign: z.boolean().nullish(),
+  verified: z.boolean().nullish(),
+  updatedAt: z.iso.datetime({ offset: true }).nullish(),
+  address: profileAddressSchema,
+});
+
+/**
+ * Retorna `null` apenas quando o usuário comprovadamente não está autenticado
+ * (sem token, ou 401/403 do servidor). Qualquer outra falha lança
+ * `SessionUnavailableError`, para que uma indisponibilidade temporária não seja
+ * confundida com logout.
+ */
 export async function getCurrentUserRequest(): Promise<CurrentUser | null> {
+  if (!localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)) {
+    return null;
+  }
+
+  let response: AxiosResponse<unknown>;
+
   try {
-    const response = await api.get(`/auth/profile`);
+    response = await api.get(`/auth/profile`);
+  } catch (error) {
+    const status = isAxiosError(error) ? error.response?.status : undefined;
 
-    const addressSchema = z
-      .object({
-        street: z.string().nullable(),
-        number: z.string().nullable(),
-        city: z.string().nullable(),
-        zip: z.string().nullable(),
-        country: z.string().nullable(),
-        updatedAt: z.iso.datetime().nullable(),
-      })
-      .nullable()
-      .optional();
-
-    const profileSchema = z.object({
-      userType: z.custom<UserType>(),
-      name: z.string(),
-      email: z.email().nullable(),
-      phone: z.string().nullable(),
-      document: z.string().nullable(),
-      gender: z.string().nullable(),
-      rg: z.string().nullable(),
-      institution: z.string().nullable(),
-      isForeign: z.boolean().nullable(),
-      verified: z.boolean().nullable(),
-      updatedAt: z.iso.datetime().nullable(),
-      address: addressSchema,
-    });
-
-    const parsed = profileSchema.safeParse(response.data);
-
-    if (!parsed.success) {
-      console.error("Invalid profile payload", parsed.error.format());
-
+    if (status === 401 || status === 403) {
       return null;
     }
 
-    return parsed.data as CurrentUser;
-  } catch (error) {
-    return null;
+    throw new SessionUnavailableError(
+      `Não foi possível verificar a sessão (${status ?? "sem resposta"})`,
+      { status, cause: error }
+    );
+  }
+
+  const parsed = profileSchema.safeParse(response.data);
+
+  if (!parsed.success) {
+    throw new SessionUnavailableError("Perfil retornado fora do contrato esperado", {
+      status: response.status,
+      cause: parsed.error,
+    });
+  }
+
+  return parsed.data as CurrentUser;
+}
+
+export type SessionCheck =
+  | { status: "authenticated"; user: CurrentUser }
+  | { status: "unauthenticated" }
+  | { status: "unavailable" };
+
+/**
+ * Versão de `getCurrentUserRequest` para guards: em vez de propagar a exceção,
+ * devolve os três estados possíveis, para que "não deu para verificar" nunca seja
+ * tratado como "faça login novamente".
+ */
+export async function checkSession(): Promise<SessionCheck> {
+  try {
+    const user = await getCurrentUserRequest();
+
+    return user ? { status: "authenticated", user } : { status: "unauthenticated" };
+  } catch {
+    return { status: "unavailable" };
   }
 }
 
@@ -388,19 +432,32 @@ export function useIsRoot() {
 export const userQueryOptions = queryOptions({
   queryKey: ["me"],
   queryFn: getCurrentUserRequest,
-  refetchInterval: 10000,
-  retry: false,
+  staleTime: 5 * 60_000,
+  refetchInterval: false,
+  refetchOnWindowFocus: true,
+  // `null` é conclusivo e chega como sucesso; só erro de disponibilidade é retentado.
+  retry: (failureCount, error) =>
+    error instanceof SessionUnavailableError && failureCount < 2,
+  retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
 });
 
 export function userPollingQueryOptions(intervalMs = 60000) {
   return {
     ...userQueryOptions,
     refetchInterval: intervalMs,
-  } as typeof userQueryOptions & { refetchInterval: number };
+  };
 }
 
 export async function requireAdminUser(queryClient: QueryClient) {
-  const user = await queryClient.ensureQueryData(userQueryOptions);
+  let user: CurrentUser | null;
+
+  try {
+    user = await queryClient.ensureQueryData(userQueryOptions);
+  } catch {
+    // Sessão indisponível não é sessão inexistente: mandar para o login aqui
+    // deslogaria visualmente um admin que só teve uma falha de rede.
+    throw redirect({ to: "/" });
+  }
 
   if (!user) {
     throw redirect({ to: "/auth/login" });

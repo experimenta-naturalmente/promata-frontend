@@ -5,7 +5,10 @@ import axios, {
 } from "axios";
 
 import type { IHttpClient } from "./http-client.interface";
-import { authInterceptor } from "./interceptors/auth.interceptor";
+import {
+  authInterceptor,
+  unauthorizedInterceptor,
+} from "./interceptors/auth.interceptor";
 
 export class AxiosHttpClient implements IHttpClient {
   private client: AxiosInstance;
@@ -24,7 +27,10 @@ export class AxiosHttpClient implements IHttpClient {
     this.client.interceptors.request.use(authInterceptor);
 
     // Adiciona interceptors de resposta
-    // this.client.interceptors.response.use()
+    this.client.interceptors.response.use(
+      (response) => response,
+      unauthorizedInterceptor
+    );
   }
 
   async get<T>(

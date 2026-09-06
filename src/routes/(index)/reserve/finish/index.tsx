@@ -26,8 +26,9 @@ import { useReservationSummaryStore } from "@/store/reservationSummaryStore";
 import { translateExperienceCategory } from "@/utils/translateExperienceCategory";
 import { digitsOnly, isValidCpf, maskCpf, maskPhone } from "@/lib/utils";
 import { z } from "zod";
-import { getCurrentUserRequest } from "@/api/user";
+import { checkSession } from "@/api/user";
 import { useCreateGroupReservation } from "@/hooks";
+import i18n from "i18next";
 
 type PersonForm = ReserveParticipantDraft;
 type StepId = 1 | 2;
@@ -690,9 +691,15 @@ export const Route = createFileRoute("/(index)/reserve/finish/")({
   component: ReserveFlow,
   beforeLoad: async () => {
     // Verificar se o usuário está autenticado
-    const currentUser = await getCurrentUserRequest();
+    const session = await checkSession();
 
-    if (!currentUser) {
+    if (session.status === "unavailable") {
+      appToast.error(i18n.t("auth.session.unavailable"));
+
+      throw redirect({ to: "/" });
+    }
+
+    if (session.status === "unauthenticated") {
       throw redirect({
         to: "/auth/login",
         search: { redirect: "/reserve/finish" },

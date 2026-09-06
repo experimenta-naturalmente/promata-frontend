@@ -234,6 +234,9 @@
     "imageAlt": "{{brand}} scenery {{index}}"
   },
   "auth": {
+    "session": {
+      "unavailable": "We could not verify your session. Please try again in a moment."
+    },
     "login": {
       "title": "Login",
       "email": "Email",
@@ -249,6 +252,7 @@
       "toastError": "Error logging in",
       "toastErrorTryAgain": "Error logging in. Please try again.",
       "toastInternal": "Internal error. Please try again.",
+      "toastSessionUnavailable": "We could not confirm your session. Please try again.",
       "invalidCredentials": "Invalid credentials. Please try again."
     },
     "forgot": {

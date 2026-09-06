@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { useLogin } from "@/hooks/auth/useLogin";
 
 const navigateMock = vi.fn();
+const searchMock = vi.fn(() => ({}) as Record<string, unknown>);
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigateMock,
+  useSearch: () => searchMock(),
 }));
 
 const toastMocks = vi.hoisted(() => ({
@@ -27,16 +29,18 @@ vi.mock("i18next", () => ({
 
 const apiMocks = vi.hoisted(() => ({
   loginRequest: vi.fn(),
+  userQueryOptions: { queryKey: ["me"], queryFn: vi.fn() },
 }));
 
 vi.mock("@/api/user", () => ({
   loginRequest: apiMocks.loginRequest,
+  userQueryOptions: apiMocks.userQueryOptions,
 }));
 
 const reactQueryMocks = vi.hoisted(() => {
   const queryClient = {
-    invalidateQueries: vi.fn(),
-    refetchQueries: vi.fn(),
+    fetchQuery: vi.fn(),
+    setQueryData: vi.fn(),
   };
   const mutationResult = {
     mutate: vi.fn(),
@@ -53,8 +57,8 @@ const reactQueryMocks = vi.hoisted(() => {
   const getLastConfig = () => lastConfig;
   const reset = () => {
     lastConfig = undefined;
-    queryClient.invalidateQueries.mockClear();
-    queryClient.refetchQueries.mockClear();
+    queryClient.fetchQuery.mockReset();
+    queryClient.setQueryData.mockClear();
     mutationResult.mutate.mockClear();
     mutationResult.mutateAsync.mockClear();
   };
@@ -110,6 +114,8 @@ runDescribe("useLogin", () => {
   beforeEach(() => {
     apiMocks.loginRequest.mockReset();
     navigateMock.mockClear();
+    searchMock.mockReset();
+    searchMock.mockReturnValue({});
     toastMocks.success.mockClear();
     toastMocks.warning.mockClear();
     toastMocks.error.mockClear();
@@ -149,11 +155,16 @@ runDescribe("useLogin", () => {
     expect(mutation).toBe(reactQueryMocks.mutationResult);
   });
 
-  runTest("stores token and refreshes user information when login succeeds", async () => {
+  runTest("stores token and confirms the session when login succeeds", async () => {
     const response: LoginResponse = {
       statusCode: 200,
       data: { token: "tok2" },
     };
+
+    reactQueryMocks.queryClient.fetchQuery.mockResolvedValue({
+      name: "Ana",
+      userType: "GUEST",
+    });
 
     invokeHook();
 
@@ -162,14 +173,90 @@ runDescribe("useLogin", () => {
     await config?.onSuccess?.(response);
 
     expect(localStorage.getItem("token")).toBe("tok2");
-    expect(reactQueryMocks.queryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["me"],
-    });
-    expect(reactQueryMocks.queryClient.refetchQueries).toHaveBeenCalledWith({
-      queryKey: ["me"],
+    expect(reactQueryMocks.queryClient.fetchQuery).toHaveBeenCalledWith({
+      ...apiMocks.userQueryOptions,
+      staleTime: 0,
     });
     expect(toastMocks.success).toHaveBeenCalledWith("auth.login.toastSuccess");
-    expect(navigateMock).toHaveBeenCalledWith({ to: "/" });
+    expect(navigateMock).toHaveBeenCalledWith({ to: "/", replace: true });
+  });
+
+  runTest("navigates to the preserved redirect target after login", async () => {
+    searchMock.mockReturnValue({ redirect: "/reserve/finish" });
+    reactQueryMocks.queryClient.fetchQuery.mockResolvedValue({
+      name: "Ana",
+      userType: "GUEST",
+    });
+
+    invokeHook();
+
+    await getMutationConfig()?.onSuccess?.({
+      statusCode: 200,
+      data: { token: "tok3" },
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith({
+      to: "/reserve/finish",
+      replace: true,
+    });
+  });
+
+  runTest("ignores external redirect targets", async () => {
+    searchMock.mockReturnValue({ redirect: "//evil.example.com" });
+    reactQueryMocks.queryClient.fetchQuery.mockResolvedValue({
+      name: "Ana",
+      userType: "GUEST",
+    });
+
+    invokeHook();
+
+    await getMutationConfig()?.onSuccess?.({
+      statusCode: 200,
+      data: { token: "tok4" },
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith({ to: "/", replace: true });
+  });
+
+  runTest("discards the token when the session cannot be confirmed", async () => {
+    reactQueryMocks.queryClient.fetchQuery.mockResolvedValue(null);
+
+    invokeHook();
+
+    await getMutationConfig()?.onSuccess?.({
+      statusCode: 200,
+      data: { token: "tok5" },
+    });
+
+    expect(localStorage.getItem("token")).toBeNull();
+    expect(reactQueryMocks.queryClient.setQueryData).toHaveBeenCalledWith(
+      ["me"],
+      null,
+    );
+    expect(toastMocks.error).toHaveBeenCalledWith(
+      "auth.login.toastSessionUnavailable",
+    );
+    expect(toastMocks.success).not.toHaveBeenCalled();
+    expect(navigateMock).not.toHaveBeenCalled();
+  });
+
+  runTest("discards the token when the profile request throws", async () => {
+    reactQueryMocks.queryClient.fetchQuery.mockRejectedValue(
+      new Error("network down"),
+    );
+
+    invokeHook();
+
+    await getMutationConfig()?.onSuccess?.({
+      statusCode: 200,
+      data: { token: "tok6" },
+    });
+
+    expect(localStorage.getItem("token")).toBeNull();
+    expect(toastMocks.error).toHaveBeenCalledWith(
+      "auth.login.toastSessionUnavailable",
+    );
+    expect(navigateMock).not.toHaveBeenCalled();
   });
 
   runTest("shows error toast when response is non-2xx", async () => {
@@ -224,7 +311,6 @@ runDescribe("useLogin", () => {
     expect(toastMocks.warning).not.toHaveBeenCalled();
     expect(toastMocks.error).not.toHaveBeenCalled();
     expect(navigateMock).not.toHaveBeenCalled();
-    expect(reactQueryMocks.queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(reactQueryMocks.queryClient.refetchQueries).not.toHaveBeenCalled();
+    expect(reactQueryMocks.queryClient.fetchQuery).not.toHaveBeenCalled();
   });
 });

@@ -12,9 +12,18 @@ import { appToast } from "@/components/toast/toast";
 let drawerOnOpenChange: ((open: boolean) => void) | undefined;
 let drawerOnPointerDownOutside: (() => void) | undefined;
 const navigateMock = vi.fn();
-const getCurrentUserRequest = vi.hoisted(() =>
+
+type SessionCheck =
+  | { status: "authenticated"; user: { id: string; name: string } }
+  | { status: "unauthenticated" }
+  | { status: "unavailable" };
+
+const checkSession = vi.hoisted(() =>
   vi.fn(() =>
-    Promise.resolve<{ id: string; name: string } | null>({ id: "user-1", name: "Test User" }),
+    Promise.resolve<SessionCheck>({
+      status: "authenticated",
+      user: { id: "user-1", name: "Test User" },
+    }),
   ),
 );
 const buttonHandlers: Array<{ onClick?: () => void; disabled?: boolean }> = [];
@@ -100,7 +109,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 vi.mock("@/api/user", () => ({
-  getCurrentUserRequest,
+  checkSession,
 }));
 
 vi.mock("@/components/toast/toast", () => ({
@@ -109,7 +118,9 @@ vi.mock("@/components/toast/toast", () => ({
 
 describe("CartDrawer", () => {
   beforeEach(() => {
-    getCurrentUserRequest.mockClear();
+    checkSession.mockClear();
+    navigateMock.mockClear();
+    vi.mocked(appToast.error).mockClear();
     act(() => {
       useCartStore.setState({ items: [], isOpen: true });
     });
@@ -246,7 +257,7 @@ describe("CartDrawer", () => {
 
     checkoutHandler?.onClick?.();
 
-    expect(getCurrentUserRequest).not.toHaveBeenCalled();
+    expect(checkSession).not.toHaveBeenCalled();
   });
 
   it("prompts login and closes when user is not authenticated", async () => {
@@ -259,7 +270,7 @@ describe("CartDrawer", () => {
     act(() => {
       useCartStore.setState({ items: [experience], isOpen: true });
     });
-    getCurrentUserRequest.mockResolvedValueOnce(null);
+    checkSession.mockResolvedValueOnce({ status: "unauthenticated" });
 
     renderWithProviders(<CartDrawer />);
 
@@ -273,5 +284,28 @@ describe("CartDrawer", () => {
       search: { redirect: "/reserve/finish" },
     });
     expect(useCartStore.getState().isOpen).toBe(false);
+  });
+
+  it("keeps the cart open without asking for login when the session is unavailable", async () => {
+    const experience: Experience = {
+      id: "exp-unavailable",
+      name: "Teste",
+      category: "EVENT",
+    } as Experience;
+
+    act(() => {
+      useCartStore.setState({ items: [experience], isOpen: true });
+    });
+    checkSession.mockResolvedValueOnce({ status: "unavailable" });
+
+    renderWithProviders(<CartDrawer />);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /finalizar reserva/i }),
+    );
+
+    expect(appToast.error).toHaveBeenCalled();
+    expect(navigateMock).not.toHaveBeenCalled();
+    expect(useCartStore.getState().isOpen).toBe(true);
   });
 });

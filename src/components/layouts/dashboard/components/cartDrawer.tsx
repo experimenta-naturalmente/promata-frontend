@@ -14,7 +14,7 @@ import { X } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { getCurrentUserRequest } from "@/api/user";
+import { checkSession } from "@/api/user";
 import { appToast } from "@/components/toast/toast";
 
 export const CartDrawer = () => {
@@ -49,9 +49,15 @@ export const CartDrawer = () => {
     }
 
     // Verificar se o usuário está autenticado
-    const currentUser = await getCurrentUserRequest();
+    const session = await checkSession();
 
-    if (!currentUser) {
+    if (session.status === "unavailable") {
+      appToast.error(t("auth.session.unavailable"));
+
+      return;
+    }
+
+    if (session.status === "unauthenticated") {
       appToast.error(t("cartDrawer.toasts.loginRequired"));
       closeCart();
       navigate({ to: "/auth/login", search: { redirect: "/reserve/finish" } });

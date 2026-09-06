@@ -2,6 +2,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useCartStore } from "@/store/cartStore";
+import { AUTH_TOKEN_STORAGE_KEY } from "@/utils/consts/auth-consts";
 
 export function useLogout() {
   const queryClient = useQueryClient();
@@ -11,7 +12,7 @@ export function useLogout() {
 
   const logout = () => {
     // Remove o token do localStorage
-    localStorage.removeItem("token");
+    localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
 
     // Limpa e remove o carrinho
     clearCart();

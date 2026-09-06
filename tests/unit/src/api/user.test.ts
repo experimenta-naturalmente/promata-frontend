@@ -4,6 +4,7 @@
       type RegisterUserPayload,
       type UpdateUserAdminPayload,
       type UpdateUserPayload,
+      checkSession,
       deleteUser,
       forgotPasswordRequest,
       getCurrentUserRequest,
@@ -21,6 +22,7 @@
       userQueryOptions,
       verifyTokenRequest,
     } from "@/api/user";
+    import { SessionUnavailableError } from "@/core/http/session-unavailable-error";
     import type { UserType } from "@/types/user";
     import type { QueryClient } from "@tanstack/react-query";
 
@@ -48,6 +50,12 @@ const createAxiosResponse = <T>(data: T, status = 200): AxiosResponse<T> =>
     config: {},
   }) as AxiosResponse<T>;
 
+const createAxiosError = (status: number) =>
+  Object.assign(new Error(`request failed with ${status}`), {
+    isAxiosError: true,
+    response: createAxiosResponse({}, status),
+  });
+
 vi.mock("@/core/api", () => ({ api: { post: postMock, patch: patchMock, get: getMock, delete: deleteMock } }));
 vi.mock("@/core/http/safe-api-caller", () => ({ safeApiCall: safeApiCallMock }));
 vi.mock("@/lib/utils", () => ({ digitsOnly: digitsOnlyMock }));
@@ -70,6 +78,7 @@ describe("user api", () => {
     useQueryMock.mockReset();
     queryOptionsMock.mockImplementation((options: unknown) => options);
     redirectMock.mockImplementation((args: { to: string }) => ({ type: "redirect", to: args.to }));
+    localStorage.clear();
   });
 
   it("maps gender to api value", () => {
@@ -511,6 +520,7 @@ describe("user api", () => {
       it("parses current user profile payloads", async () => {
         const iso = new Date().toISOString();
 
+        localStorage.setItem("token", "jwt");
         getMock.mockResolvedValue(
           createAxiosResponse({
             userType: "ADMIN",
@@ -541,34 +551,101 @@ describe("user api", () => {
         expect(result).toMatchObject({ name: "Alice", address: { street: "Main" } });
       });
 
-      it("returns null and logs when profile payload is invalid", async () => {
-        getMock.mockResolvedValue(createAxiosResponse({}));
-        const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+      it("accepts profiles with absent optional fields and offset timestamps", async () => {
+        localStorage.setItem("token", "jwt");
+        getMock.mockResolvedValue(
+          createAxiosResponse({
+            userType: "GUEST",
+            name: "Bob",
+            updatedAt: "2026-09-06T15:30:00-03:00",
+          }),
+        );
 
-        const result = await getCurrentUserRequest();
-
-        expect(result).toBeNull();
-        expect(consoleSpy).toHaveBeenCalledWith("Invalid profile payload", expect.anything());
-
-        consoleSpy.mockRestore();
+        await expect(getCurrentUserRequest()).resolves.toMatchObject({ name: "Bob" });
       });
 
-      it("returns null when fetching profile fails", async () => {
-        getMock.mockRejectedValue(new Error("boom"));
-        const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
-
+      it("returns null without requesting when there is no token", async () => {
         const result = await getCurrentUserRequest();
 
         expect(result).toBeNull();
-        expect(consoleSpy).not.toHaveBeenCalled();
+        expect(getMock).not.toHaveBeenCalled();
+      });
 
-        consoleSpy.mockRestore();
+      it.each([401, 403])(
+        "returns null when the server rejects the token with %i",
+        async (status) => {
+          localStorage.setItem("token", "jwt");
+          getMock.mockRejectedValue(createAxiosError(status));
+
+          await expect(getCurrentUserRequest()).resolves.toBeNull();
+        },
+      );
+
+      it.each([429, 500, 503])(
+        "throws instead of reporting a logout on %i",
+        async (status) => {
+          localStorage.setItem("token", "jwt");
+          getMock.mockRejectedValue(createAxiosError(status));
+
+          await expect(getCurrentUserRequest()).rejects.toBeInstanceOf(
+            SessionUnavailableError,
+          );
+        },
+      );
+
+      it("throws when the request never gets a response", async () => {
+        localStorage.setItem("token", "jwt");
+        getMock.mockRejectedValue(new Error("Network Error"));
+
+        await expect(getCurrentUserRequest()).rejects.toBeInstanceOf(
+          SessionUnavailableError,
+        );
+      });
+
+      it("throws when profile payload breaks the contract", async () => {
+        localStorage.setItem("token", "jwt");
+        getMock.mockResolvedValue(createAxiosResponse({}));
+
+        await expect(getCurrentUserRequest()).rejects.toBeInstanceOf(
+          SessionUnavailableError,
+        );
+      });
+
+      it("reports the three session states through checkSession", async () => {
+        localStorage.setItem("token", "jwt");
+        getMock.mockResolvedValue(
+          createAxiosResponse({ userType: "GUEST", name: "Bob" }),
+        );
+
+        await expect(checkSession()).resolves.toEqual({
+          status: "authenticated",
+          user: { userType: "GUEST", name: "Bob" },
+        });
+
+        getMock.mockRejectedValue(createAxiosError(401));
+
+        await expect(checkSession()).resolves.toEqual({ status: "unauthenticated" });
+
+        getMock.mockRejectedValue(createAxiosError(429));
+
+        await expect(checkSession()).resolves.toEqual({ status: "unavailable" });
       });
 
       it("exposes default user query options", () => {
         expect(userQueryOptions.queryKey).toEqual(["me"]);
-        expect(userQueryOptions.refetchInterval).toBe(10000);
-        expect(userQueryOptions.retry).toBe(false);
+        expect(userQueryOptions.refetchInterval).toBe(false);
+        expect(userQueryOptions.staleTime).toBe(5 * 60_000);
+      });
+
+      it("only retries the profile query on availability errors", () => {
+        const retry = userQueryOptions.retry as (
+          failureCount: number,
+          error: Error,
+        ) => boolean;
+
+        expect(retry(0, new SessionUnavailableError("down"))).toBe(true);
+        expect(retry(2, new SessionUnavailableError("down"))).toBe(false);
+        expect(retry(0, new Error("other"))).toBe(false);
       });
 
       it("builds polling options with overridable interval", () => {
@@ -612,5 +689,14 @@ describe("user api", () => {
         const nonAdminClient = { ensureQueryData: nonAdminEnsureQueryData } as unknown as QueryClient;
 
         await expect(requireAdminUser(nonAdminClient)).rejects.toEqual({ type: "redirect", to: "/" });
+      });
+
+      it("does not send an admin to the login page when the session is unavailable", async () => {
+        const ensureQueryData = vi
+          .fn()
+          .mockRejectedValue(new SessionUnavailableError("down"));
+        const client = { ensureQueryData } as unknown as QueryClient;
+
+        await expect(requireAdminUser(client)).rejects.toEqual({ type: "redirect", to: "/" });
       });
     });

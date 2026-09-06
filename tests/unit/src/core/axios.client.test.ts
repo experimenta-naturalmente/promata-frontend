@@ -12,9 +12,13 @@ type HoistedMocks = {
     delete: AxiosMethodMock;
     patch: AxiosMethodMock;
     defaults: { baseURL: string };
-    interceptors: { request: { use: AxiosMethodMock } };
+    interceptors: {
+      request: { use: AxiosMethodMock };
+      response: { use: AxiosMethodMock };
+    };
   };
   authInterceptorMock: ReturnType<typeof vi.fn>;
+  unauthorizedInterceptorMock: ReturnType<typeof vi.fn>;
   methodMocks: {
     getMock: AxiosMethodMock;
     postMock: AxiosMethodMock;
@@ -22,6 +26,7 @@ type HoistedMocks = {
     deleteMock: AxiosMethodMock;
     patchMock: AxiosMethodMock;
     requestUseMock: AxiosMethodMock;
+    responseUseMock: AxiosMethodMock;
   };
 };
 
@@ -33,6 +38,7 @@ const hoistedMocks = vi.hoisted<HoistedMocks>(() => {
   const deleteMock = vi.fn();
   const patchMock = vi.fn();
   const requestUseMock = vi.fn();
+  const responseUseMock = vi.fn();
 
   const axiosInstanceMock: HoistedMocks["axiosInstanceMock"] = {
     get: getMock,
@@ -41,15 +47,20 @@ const hoistedMocks = vi.hoisted<HoistedMocks>(() => {
     delete: deleteMock,
     patch: patchMock,
     defaults: { baseURL: "initial" },
-    interceptors: { request: { use: requestUseMock } },
+    interceptors: {
+      request: { use: requestUseMock },
+      response: { use: responseUseMock },
+    },
   };
 
   const authInterceptorMock = vi.fn((config: AxiosRequestConfig) => config);
+  const unauthorizedInterceptorMock = vi.fn();
 
   return {
     axiosCreateMock,
     axiosInstanceMock,
     authInterceptorMock,
+    unauthorizedInterceptorMock,
     methodMocks: {
       getMock,
       postMock,
@@ -57,6 +68,7 @@ const hoistedMocks = vi.hoisted<HoistedMocks>(() => {
       deleteMock,
       patchMock,
       requestUseMock,
+      responseUseMock,
     },
   } satisfies HoistedMocks;
 });
@@ -71,15 +83,21 @@ vi.mock("axios", () => {
 });
 
 vi.mock("@/core/http/axios/interceptors/auth.interceptor", () => {
-  const { authInterceptorMock } = hoistedMocks;
+  const { authInterceptorMock, unauthorizedInterceptorMock } = hoistedMocks;
 
   return {
     authInterceptor: authInterceptorMock,
+    unauthorizedInterceptor: unauthorizedInterceptorMock,
   };
 });
 
-const { axiosCreateMock, axiosInstanceMock, authInterceptorMock, methodMocks } =
-  hoistedMocks;
+const {
+  axiosCreateMock,
+  axiosInstanceMock,
+  authInterceptorMock,
+  unauthorizedInterceptorMock,
+  methodMocks,
+} = hoistedMocks;
 
 import { AxiosHttpClient } from "@/core/http/axios/axios.client";
 
@@ -94,6 +112,7 @@ describe("AxiosHttpClient", () => {
     methodMocks.deleteMock.mockReset();
     methodMocks.patchMock.mockReset();
     methodMocks.requestUseMock.mockClear();
+    methodMocks.responseUseMock.mockClear();
 
     axiosInstanceMock.defaults.baseURL = "initial";
   });
@@ -114,6 +133,17 @@ describe("AxiosHttpClient", () => {
     expect(methodMocks.requestUseMock).toHaveBeenCalledWith(
       authInterceptorMock
     );
+    expect(methodMocks.responseUseMock).toHaveBeenCalledWith(
+      expect.any(Function),
+      unauthorizedInterceptorMock
+    );
+
+    const passThrough = methodMocks.responseUseMock.mock.calls[0][0] as (
+      response: AxiosResponse
+    ) => AxiosResponse;
+    const response = { data: "ok" } as AxiosResponse;
+
+    expect(passThrough(response)).toBe(response);
   });
 
   it("delegates HTTP verbs to the underlying axios instance", async () => {

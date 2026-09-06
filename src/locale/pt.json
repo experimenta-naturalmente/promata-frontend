@@ -236,6 +236,9 @@
   },
 
   "auth": {
+    "session": {
+      "unavailable": "Não foi possível verificar sua sessão. Tente novamente em instantes."
+    },
     "login": {
       "title": "Login",
       "email": "Email",
@@ -251,6 +254,7 @@
       "toastWarning": "Atenção: Você deve mudar a sua senha no primeiro acesso.",
       "toastErrorTryAgain": "Erro ao fazer login. Tente novamente.",
       "toastInternal": "Erro interno. Tente novamente.",
+      "toastSessionUnavailable": "Não foi possível confirmar sua sessão. Tente novamente.",
       "invalidCredentials": "Credenciais inválidas. Tente novamente."
     },
     "forgot": {
