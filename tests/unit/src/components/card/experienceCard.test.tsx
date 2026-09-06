@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -179,6 +179,60 @@ describe("CardExperience", () => {
     const { container } = renderWithClient(<CardExperience experience={baseExperience} />);
     const img = container.querySelector("img");
     expect(img).toHaveClass("opacity-0");
+  });
+
+  it("alterna automaticamente entre as imagens da galeria", () => {
+    vi.useFakeTimers();
+
+    try {
+      const { container } = renderWithClient(
+        <CardExperience
+          experience={buildExperience({
+            images: [{ url: "/first.png" }, { url: "/second.png" }, { url: "/third.png" }],
+          })}
+        />,
+      );
+
+      const images = Array.from(container.querySelectorAll("img"));
+
+      expect(images).toHaveLength(3);
+      expect(images[0]).toHaveClass("opacity-100");
+      expect(images[1]).toHaveClass("opacity-0");
+
+      act(() => {
+        vi.advanceTimersByTime(4000);
+      });
+
+      expect(images[0]).toHaveClass("opacity-0");
+      expect(images[1]).toHaveClass("opacity-100");
+
+      act(() => {
+        vi.advanceTimersByTime(8000);
+      });
+
+      expect(images[0]).toHaveClass("opacity-100");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("não alterna quando a experiência tem uma única imagem", () => {
+    vi.useFakeTimers();
+
+    try {
+      const { container } = renderWithClient(
+        <CardExperience experience={buildExperience({ images: [{ url: "/only.png" }] })} />,
+      );
+
+      act(() => {
+        vi.advanceTimersByTime(12000);
+      });
+
+      expect(container.querySelectorAll("img")).toHaveLength(1);
+      expect(container.querySelector("img")).toHaveClass("opacity-100");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("categoria CUSTOM usa fallback visível", () => {

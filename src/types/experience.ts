@@ -63,7 +63,6 @@ export type ExperienceApiImage =
   | undefined;
 
 export interface ExperienceApiResponse {
-  // API GET retorna sem prefixo
   id?: string | null;
   name?: string;
   description?: string | null;

@@ -4,7 +4,8 @@ import { useCartStore } from "@/store/cartStore";
 import { resolveImageUrl } from "@/utils/resolveImageUrl";
 import { CalendarClock, DollarSign, Map, Timer, Users } from "lucide-react";
 import { BsSpeedometer2 } from "react-icons/bs";
-import { type ComponentType, useMemo } from "react";
+import { type ComponentType, useEffect, useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useLoadImage } from "@/hooks/shared/useLoadImage";
 import { type Experience, ExperienceCategoryCard } from "@/types/experience";
@@ -13,6 +14,8 @@ import { translateExperienceCategory } from "@/utils/translateExperienceCategory
 interface CardExperienceProps {
   experience: Experience;
 }
+
+const IMAGE_ROTATION_MS = 3000;
 
 const minutesToHours = (minutes?: number | null) =>
   minutes != null ? Number((minutes / 60).toFixed(1)) : undefined;
@@ -194,8 +197,27 @@ export function CardExperience({ experience }: CardExperienceProps) {
     detailLabels.push({ icon: CalendarClock, text: eventDateLabel });
   }
 
-  const imageSrc = resolveImageUrl(experience.image?.url);
-  const { data: imageLoaded, isLoading: imageLoading } = useLoadImage(imageSrc);
+  const galleryKey = (experience.images ?? []).map((image) => image.url).join("|");
+  const imageUrls = useMemo(() => {
+    const gallery = galleryKey.split("|").filter(Boolean).map(resolveImageUrl);
+
+    return gallery.length > 0 ? gallery : [resolveImageUrl(experience.image?.url)];
+  }, [galleryKey, experience.image?.url]);
+
+  const [rotationTick, setRotationTick] = useState(0);
+  const activeImage = rotationTick % imageUrls.length;
+
+  useEffect(() => {
+    if (imageUrls.length < 2) {
+      return;
+    }
+
+    const rotation = setInterval(() => setRotationTick((tick) => tick + 1), IMAGE_ROTATION_MS);
+
+    return () => clearInterval(rotation);
+  }, [imageUrls]);
+
+  const { data: imageLoaded, isLoading: imageLoading } = useLoadImage(imageUrls[0]);
 
   const addToCartLabel = (() => {
     const key = "experienceCard.addToCart";
@@ -211,14 +233,31 @@ export function CardExperience({ experience }: CardExperienceProps) {
   return (
     <div className="bg-card relative flex w-full max-w-[520px] flex-col overflow-hidden rounded-[20px] shadow-sm">
       <div className="relative w-full overflow-hidden pb-[54%]">
-        <img
-          src={imageSrc}
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
-            imageLoaded && !imageLoading ? "opacity-100" : "opacity-0"
-          }`}
-          alt=""
-        />
+        {imageUrls.map((url, index) => (
+          <img
+            key={`${url}-${index}`}
+            src={url}
+            alt=""
+            className={cn(
+              "absolute inset-0 h-full w-full object-cover transition-opacity duration-700",
+              index === activeImage && imageLoaded && !imageLoading ? "opacity-100" : "opacity-0",
+            )}
+          />
+        ))}
         {imageLoading && <div className="absolute inset-0 animate-pulse bg-muted" />}
+        {imageUrls.length > 1 && (
+          <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
+            {imageUrls.map((url, index) => (
+              <span
+                key={`dot-${url}-${index}`}
+                className={cn(
+                  "h-2 w-2 rounded-full transition-colors",
+                  index === activeImage ? "bg-white" : "bg-white/50",
+                )}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col gap-4 px-6 py-5">

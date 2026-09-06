@@ -113,14 +113,14 @@ export async function getExperiencesByFilter(
 
   const res = await api.get<
     {
-      items: ExperienceDTO[];
+      items: ExperienceApiResponse[];
     } & { page: number; limit: number; total: number }
   >(`/experience/search`, {
     params: queryParams,
   });
 
   return {
-    items: res.data.items,
+    items: res.data.items.map(mapExperienceApiResponseToDTO),
     page: res.data.page,
     limit: res.data.limit,
     total: res.data.total,
