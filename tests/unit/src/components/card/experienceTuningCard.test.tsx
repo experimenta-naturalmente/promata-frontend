@@ -306,8 +306,24 @@ describe("ExperienceCard", () => {
 
     expect(screen.getByText("Viagem Rural")).toBeInTheDocument();
     expect(screen.getByText("Turismo")).toBeInTheDocument();
-    expect(screen.getByText(/R\$\s*100,50/)).toBeInTheDocument();
+    expect(screen.getByText(/R\$\s*2\.512,50/)).toBeInTheDocument();
     expect(screen.getByRole("img")).toHaveAttribute("src", "image.jpg");
+  });
+
+  it("mostra o preço unitário quando datas e pessoas ainda não foram salvas", () => {
+    setMockExperienceTuning({
+      saved: false,
+      savedRange: undefined,
+      savedMen: 0,
+      savedWomen: 0,
+      range: { from: undefined, to: undefined },
+      men: "",
+      women: "",
+    });
+
+    renderWithProviders(<ExperienceCard {...baseProps} />);
+
+    expect(screen.getByText(/R\$\s*100,50/)).toBeInTheDocument();
   });
 
   it("mostra informações salvas quando saved=true", () => {
@@ -497,12 +513,12 @@ describe("ExperienceCard", () => {
     expect(screen.queryByText("Turismo")).not.toBeInTheDocument();
   });
 
-  it("usa locale en-US para formatar preço quando idioma não é português", () => {
+  it("formata o preço em real brasileiro mesmo com idioma em inglês", () => {
     setTranslationLanguage("en-US");
 
     renderWithProviders(<ExperienceCard {...baseProps} price={Number.NaN} />);
 
-    expect(screen.getByText(/R\$\s*0\.00/)).toBeInTheDocument();
+    expect(screen.getByText(/R\$\s*0,00/)).toBeInTheDocument();
   });
 
   it("desabilita o botão salvar quando range incompleto", async () => {

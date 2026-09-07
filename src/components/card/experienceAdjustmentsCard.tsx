@@ -6,6 +6,8 @@ import { useExperienceAdjustments } from "@/hooks/experiences/useExperienceAdjus
 import { cn } from "@/lib/utils";
 import type { NormalizedExperienceAdjustment } from "@/types/experience-adjustments";
 import type { ExperienceTuningData } from "@/types/experience";
+import { estimatedReservationTotal } from "@/utils/reservationEstimatedTotal";
+import { formatBRL } from "@/utils/formatBRL";
 
 type ExperienceAdjustmentsCardProps = {
   className?: string;
@@ -104,6 +106,30 @@ function ExperienceAdjustmentsCard({
     });
   }, [data, externalExperiences, fallbackExperiences, hasExternalSource, t]);
 
+  const estimatedTotal = useMemo(
+    () =>
+      experiencesToRender.reduce((total, exp) => {
+        const adjustment = exp.experienceId
+          ? adjustments.find((item) => item.experienceId === exp.experienceId)
+          : undefined;
+
+        if (!adjustment) {
+          return total;
+        }
+
+        return (
+          total +
+          estimatedReservationTotal({
+            startDate: adjustment.from,
+            endDate: adjustment.to,
+            membersCount: Number(adjustment.men) + Number(adjustment.women),
+            experience: { price: exp.price, category: exp.type },
+          })
+        );
+      }, 0),
+    [adjustments, experiencesToRender],
+  );
+
   if (!hasExternalSource && isLoading) {
     return <div className="p-8">{t("common.loading")}</div>;
   }
@@ -154,6 +180,15 @@ function ExperienceAdjustmentsCard({
             onSave={upsertAdjustment}
           />
         ))}
+        {estimatedTotal > 0 && (
+          <div className="flex items-center justify-end rounded-full bg-card px-4 py-2 shadow-sm">
+            <span className="text-sm font-semibold text-main-dark-green">
+              {t("reserveFlow.experienceStep.estimatedTotal", {
+                value: formatBRL(estimatedTotal),
+              })}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

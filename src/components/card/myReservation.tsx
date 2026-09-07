@@ -23,6 +23,7 @@ import { ReservationInfoCard } from "@/components/card/reservationInfoCard";
 import { HistoryRequestModal } from "@/components/modals/historyRequestModal";
 import { type Person } from "@/types/person";
 import { useSendPaymentProof } from "@/hooks";
+import { formatBRL } from "@/utils/formatBRL";
 
 type MyReservationCardProps = {
   id: string;
@@ -171,7 +172,7 @@ export default function MyReservationCard({
                   <DollarSign className="w-3.5 h-3.5" />
                 </div>
                 <span className="text-sm font-semibold text-main-dark-green whitespace-normal sm:whitespace-nowrap">
-                  R$ {price.toFixed(2)}
+                  {formatBRL(price)}
                 </span>
               </div>
             </div>

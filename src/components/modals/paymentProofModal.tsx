@@ -3,6 +3,7 @@ import { Button } from "@/components/button/defaultButton";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
+import { formatBRL } from "@/utils/formatBRL";
 
 type PaymentProofModalProps = {
   open: boolean;
@@ -65,7 +66,7 @@ export function PaymentProofModal({
           </ul>
           <p className="mt-2">
             {t("paymentProof.sendProofWithValue")}{" "}
-            <span className="font-semibold">R$ {price.toFixed(2)}</span>
+            <span className="font-semibold">{formatBRL(price)}</span>
           </p>
         </div>
 

@@ -418,6 +418,7 @@
     "experienceStep": {
       "instructions": "Revise as experiências selecionadas, ajustando datas, quantidade de pessoas e demais detalhes antes de finalizar a reserva.",
       "selectedExperiences": "Experiências selecionadas",
+      "estimatedTotal": "Total estimado: {{value}}",
       "error": "Erro ao carregar experiências.",
       "emptyCart": "Nenhuma experiência selecionada.",
       "fallbackExperiences": {

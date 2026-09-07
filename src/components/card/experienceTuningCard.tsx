@@ -12,6 +12,9 @@ import { useExperienceTuning } from "@/hooks/experiences/useExperienceTuning";
 import type { ExperienceTuningData } from "@/types/experience";
 import { useLoadImage } from "@/hooks/shared/useLoadImage";
 import { translateExperienceCategory } from "@/utils/translateExperienceCategory";
+import { estimatedReservationTotal } from "@/utils/reservationEstimatedTotal";
+import { isHouseHosting } from "@/types/experience";
+import { formatBRL } from "@/utils/formatBRL";
 
 type ExperienceCardProps = {
   title: string;
@@ -65,10 +68,6 @@ export default function ExperienceCard({
     () => (i18n.language?.startsWith("pt") ? "pt-BR" : "en-US"),
     [i18n.language],
   );
-  const currencyFormatter = useMemo(
-    () => new Intl.NumberFormat(locale, { style: "currency", currency: "BRL" }),
-    [locale],
-  );
   const translatedType = useMemo(() => translateExperienceCategory(type, t, type ?? ""), [type, t]);
   const dateFormatter = useMemo(
     () =>
@@ -80,7 +79,28 @@ export default function ExperienceCard({
     [locale],
   );
   const fmt = (d: Date) => dateFormatter.format(d);
-  const formattedPrice = currencyFormatter.format(Number.isFinite(price) ? price : 0);
+  const livePeople = (Number(men) || 0) + (Number(women) || 0);
+  const savedPeople = savedMen + savedWomen;
+  const estimateRange =
+    open && range?.from && range?.to
+      ? { start: range.from, end: range.to, people: livePeople }
+      : saved && savedRange?.from && savedRange?.to
+        ? { start: savedRange.from, end: savedRange.to, people: savedPeople }
+        : null;
+  const estimatedTotal = estimateRange
+    ? estimatedReservationTotal({
+        startDate: estimateRange.start,
+        endDate: estimateRange.end,
+        membersCount: estimateRange.people,
+        experience: { price, category: type },
+      })
+    : null;
+  const showEstimatedTotal =
+    estimatedTotal != null &&
+    estimatedTotal > 0 &&
+    Boolean(estimateRange) &&
+    (isHouseHosting(type) || (estimateRange?.people ?? 0) > 0);
+  const formattedPrice = formatBRL(showEstimatedTotal ? estimatedTotal : price);
   const calendarStyles = { "--rdp-cell-size": "1.5rem" } as CSSProperties;
 
   const disabledDates = useMemo(() => {

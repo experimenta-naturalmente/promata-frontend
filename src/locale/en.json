@@ -414,6 +414,7 @@
     "experienceStep": {
       "instructions": "Review the selected experiences, adjusting dates, group size, and any other details before completing the reservation.",
       "selectedExperiences": "Selected experiences",
+      "estimatedTotal": "Estimated total: {{value}}",
       "error": "Error loading experiences.",
       "fallbackExperiences": {
         "sunriseTrail": {

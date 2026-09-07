@@ -7,6 +7,7 @@ import { Typography } from "@/components/typography/typography";
 import { cn } from "@/lib/utils";
 import type { ReserveSummaryExperience } from "@/types/reserve";
 import { useLoadImage } from "@/hooks";
+import { formatBRL } from "@/utils/formatBRL";
 
 export type ReserveSummaryExperienceCardProps = ReserveSummaryExperience & {
   className?: string;
@@ -43,18 +44,12 @@ export function ReserveSummaryExperienceCard({
       month: "2-digit",
     });
 
-    const priceFormatter = new Intl.NumberFormat(i18n.language, {
-      style: "currency",
-      currency: "BRL",
-      minimumFractionDigits: 2,
-    });
-
     return {
       formattedPeriod: t("reserveSummary.experiences.period", {
         from: formatter.format(fromDate),
         to: formatter.format(toDate),
       }),
-      formattedPrice: price ? priceFormatter.format(price) : "Sem valor estipulado",
+      formattedPrice: price ? formatBRL(price) : "Sem valor estipulado",
     };
   }, [startDate, endDate, price, i18n.language, t]);
 

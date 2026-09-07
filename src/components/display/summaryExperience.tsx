@@ -1,6 +1,7 @@
 import { Typography } from "@/components/typography/typography";
 import { useLoadImage } from "@/hooks";
 import type { Locale } from "@/types/locale";
+import { formatBRL } from "@/utils/formatBRL";
 import { CalendarDays, CircleDollarSign, User } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -44,15 +45,9 @@ export const SummaryExperience = ({
     }).format(new Date(Number(year), Number(month) - 1, Number(day)));
   };
 
-  const currencyFormatter = new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 2,
-  });
-
   const formattedStartDate = formatDate(startDate);
   const formattedEndDate = formatDate(endDate);
-  const formattedPrice = currencyFormatter.format(price);
+  const formattedPrice = formatBRL(price);
 
   return (
     <div className="flex gap-4 p-4 pr-16 bg-card-background w-fit rounded-2xl items-center shadow-xl">

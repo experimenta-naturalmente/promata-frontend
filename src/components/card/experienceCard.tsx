@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { useLoadImage } from "@/hooks/shared/useLoadImage";
 import { type Experience, ExperienceCategoryCard, isHouseHosting } from "@/types/experience";
 import { translateExperienceCategory } from "@/utils/translateExperienceCategory";
+import { formatBRL } from "@/utils/formatBRL";
 import { MarkdownContent } from "@/components/text-areas";
 
 interface CardExperienceProps {
@@ -27,11 +28,6 @@ export function CardExperience({ experience }: CardExperienceProps) {
   const locale = useMemo(
     () => (i18n.language?.startsWith("pt") ? "pt-BR" : "en-US"),
     [i18n.language],
-  );
-
-  const currencyFormatter = useMemo(
-    () => new Intl.NumberFormat(locale, { style: "currency", currency: "BRL" }),
-    [locale],
   );
 
   const decimalFormatter = useMemo(
@@ -185,8 +181,8 @@ export function CardExperience({ experience }: CardExperienceProps) {
   const priceLabel =
     price != null && Number.isFinite(price) && priceMax != null && Number.isFinite(priceMax)
       ? isHouseHosting(experience.category) || price === priceMax
-        ? currencyFormatter.format(price)
-        : `${currencyFormatter.format(price)} - ${currencyFormatter.format(priceMax)}`
+        ? formatBRL(price)
+        : `${formatBRL(price)} - ${formatBRL(priceMax)}`
       : "-";
 
   const detailLabels: Array<{

@@ -7,6 +7,7 @@ import { resolveImageUrl } from "@/utils/resolveImageUrl";
 import { useTranslation } from "react-i18next";
 import { useLoadImage } from "@/hooks/shared/useLoadImage";
 import { translateExperienceCategory } from "@/utils/translateExperienceCategory";
+import { formatBRL } from "@/utils/formatBRL";
 
 export interface CartItemProps {
   experience: ExperienceDTO;
@@ -37,10 +38,6 @@ const CartItem: React.FC<CartItemProps> = ({ experience: e, onSelect, onRemove, 
   const locale = useMemo(
     () => (i18n.language?.startsWith("pt") ? "pt-BR" : "en-US"),
     [i18n.language],
-  );
-  const currencyFormatter = useMemo(
-    () => new Intl.NumberFormat(locale, { style: "currency", currency: "BRL" }),
-    [locale],
   );
   const decimalFormatter = useMemo(
     () =>
@@ -80,8 +77,8 @@ const CartItem: React.FC<CartItemProps> = ({ experience: e, onSelect, onRemove, 
   const priceLabel =
     unitPrice != null && Number.isFinite(unitPrice) && maxPrice != null && Number.isFinite(maxPrice)
       ? isHouseHosting(e.category) || unitPrice === maxPrice
-        ? currencyFormatter.format(unitPrice)
-        : `${currencyFormatter.format(unitPrice)} - ${currencyFormatter.format(maxPrice)}`
+        ? formatBRL(unitPrice)
+        : `${formatBRL(unitPrice)} - ${formatBRL(maxPrice)}`
       : "-";
 
   const minCapacity = Number(e.minCapacity ?? 1);
