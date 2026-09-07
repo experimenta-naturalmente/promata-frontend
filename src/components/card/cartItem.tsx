@@ -2,7 +2,7 @@ import React, { Fragment, type ReactElement, useMemo } from "react";
 import { BsSpeedometer2 } from "react-icons/bs";
 import { CalendarClock, DollarSign, Map, Timer, Trash2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ExperienceCategoryCard, type ExperienceDTO } from "@/types/experience";
+import { ExperienceCategoryCard, isHouseHosting, type ExperienceDTO } from "@/types/experience";
 import { resolveImageUrl } from "@/utils/resolveImageUrl";
 import { useTranslation } from "react-i18next";
 import { useLoadImage } from "@/hooks/shared/useLoadImage";
@@ -70,10 +70,18 @@ const CartItem: React.FC<CartItemProps> = ({ experience: e, onSelect, onRemove, 
   const maxCapacity = Number(e.capacity ?? 0);
   const unitPrice = e.price == null ? null : Number(e.price);
   const maxPrice =
-    e.priceMax == null ? (unitPrice == null ? null : unitPrice * maxCapacity) : Number(e.priceMax);
+    e.priceMax == null
+      ? unitPrice == null
+        ? null
+        : isHouseHosting(e.category)
+          ? unitPrice
+          : unitPrice * maxCapacity
+      : Number(e.priceMax);
   const priceLabel =
     unitPrice != null && Number.isFinite(unitPrice) && maxPrice != null && Number.isFinite(maxPrice)
-      ? `${currencyFormatter.format(unitPrice)} - ${currencyFormatter.format(maxPrice)}`
+      ? isHouseHosting(e.category) || unitPrice === maxPrice
+        ? currencyFormatter.format(unitPrice)
+        : `${currencyFormatter.format(unitPrice)} - ${currencyFormatter.format(maxPrice)}`
       : "-";
 
   const minCapacity = Number(e.minCapacity ?? 1);

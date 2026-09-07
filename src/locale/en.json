@@ -24,6 +24,8 @@
     "trail": "Trail",
     "labs": "Labs",
     "rooms": "Rooms",
+    "house": "House",
+    "houses": "Houses",
     "events": "Events",
     "trails": "Trails",
     "experience": "Experience",
@@ -182,6 +184,7 @@
     "departureDatePlaceholder": "Check-out",
     "experienceTypes": {
       "rooms": "Rooms",
+      "houses": "Houses",
       "events": "Events",
       "labs": "Laboratories",
       "trails": "Trails"
@@ -540,7 +543,8 @@
   "category": {
     "event": "Event",
     "trail": "Trail",
-    "hosting": "Hosting",
+    "hosting": "Room",
+    "house": "House",
     "laboratory": "Laboratory"
   },
   "requests": {

@@ -12,6 +12,10 @@ const baseMap: Record<string, string> = {
   rooms: "room",
   hospedagem: "room",
   hotel: "room",
+  house: "house",
+  houses: "house",
+  casa: "house",
+  hosting_house: "house",
   lab: "lab",
   laboratories: "lab",
   labs: "lab",
@@ -22,18 +26,22 @@ const baseMap: Record<string, string> = {
 baseMap[ExperienceCategory.TRILHA.toLowerCase()] = "trail";
 baseMap[ExperienceCategory.EVENTO.toLowerCase()] = "event";
 baseMap[ExperienceCategory.HOSPEDAGEM.toLowerCase()] = "room";
+baseMap[ExperienceCategory.HOSPEDAGEM_CASA.toLowerCase()] = "house";
 baseMap[ExperienceCategory.LABORATORIO.toLowerCase()] = "lab";
 baseMap[ExperienceCategory.TRILHA] = "trail";
 baseMap[ExperienceCategory.EVENTO] = "event";
 baseMap[ExperienceCategory.HOSPEDAGEM] = "room";
+baseMap[ExperienceCategory.HOSPEDAGEM_CASA] = "house";
 baseMap[ExperienceCategory.LABORATORIO] = "lab";
 baseMap[ExperienceCategoryCard.TRAIL.toLowerCase()] = "trail";
 baseMap[ExperienceCategoryCard.EVENT.toLowerCase()] = "event";
 baseMap[ExperienceCategoryCard.ROOM.toLowerCase()] = "room";
+baseMap[ExperienceCategoryCard.HOUSE.toLowerCase()] = "house";
 baseMap[ExperienceCategoryCard.LAB.toLowerCase()] = "lab";
 baseMap[ExperienceCategoryCard.TRAIL] = "trail";
 baseMap[ExperienceCategoryCard.EVENT] = "event";
 baseMap[ExperienceCategoryCard.ROOM] = "room";
+baseMap[ExperienceCategoryCard.HOUSE] = "house";
 baseMap[ExperienceCategoryCard.LAB] = "lab";
 
 function capitalize(value: string): string {

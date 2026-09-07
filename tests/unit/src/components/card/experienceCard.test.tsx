@@ -259,6 +259,20 @@ describe("CardExperience", () => {
     expect(screen.getByText(/unknown/i)).toBeInTheDocument();
   });
 
+  it("mostra hospedagem quarto como Quarto", () => {
+    renderWithClient(
+      <CardExperience experience={{ ...baseExperience, category: ExperienceCategoryCard.ROOM }} />,
+    );
+    expect(screen.getByText("Quarto")).toBeInTheDocument();
+  });
+
+  it("mostra hospedagem casa como Casa", () => {
+    renderWithClient(
+      <CardExperience experience={{ ...baseExperience, category: ExperienceCategoryCard.HOUSE }} />,
+    );
+    expect(screen.getByText("Casa")).toBeInTheDocument();
+  });
+
   it("preço ausente mostra '-'", () => {
     renderWithClient(<CardExperience experience={{ ...baseExperience, price: null }} />);
     expect(screen.getByText("-")).toBeInTheDocument();

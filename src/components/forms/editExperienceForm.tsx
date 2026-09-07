@@ -34,6 +34,7 @@ import {
   Calendar,
   CalendarIcon,
   FlaskConical,
+  Home,
   ImagePlus,
   Loader,
   Mountain,
@@ -178,6 +179,8 @@ const getCategoryIcon = (category: ExperienceCategory) => {
       return <Mountain className="h-4 w-4" />;
     case ExperienceCategory.HOSPEDAGEM:
       return <Bed className="h-4 w-4" />;
+    case ExperienceCategory.HOSPEDAGEM_CASA:
+      return <Home className="h-4 w-4" />;
     case ExperienceCategory.EVENTO:
       return <Calendar className="h-4 w-4" />;
     default:

@@ -3,6 +3,7 @@ export enum ExperienceCategory {
   TRILHA = "TRAIL",
   EVENTO = "EVENT",
   HOSPEDAGEM = "HOSTING",
+  HOSPEDAGEM_CASA = "HOSTING_HOUSE",
   LABORATORIO = "LABORATORY",
 }
 
@@ -10,6 +11,7 @@ export const EXPERIENCE_CATEGORY_LABEL = {
   [ExperienceCategory.EVENTO]: "category.event",
   [ExperienceCategory.TRILHA]: "category.trail",
   [ExperienceCategory.HOSPEDAGEM]: "category.hosting",
+  [ExperienceCategory.HOSPEDAGEM_CASA]: "category.house",
   [ExperienceCategory.LABORATORIO]: "category.laboratory",
 } as Record<string | number, string>;
 
@@ -17,6 +19,7 @@ export const EXPERIENCE_CATEGORY_STYLE_COLOR = {
   [ExperienceCategory.EVENTO]: "bg-blue-100 text-blue-800",
   [ExperienceCategory.TRILHA]: "bg-cyan-100 text-cyan-800",
   [ExperienceCategory.HOSPEDAGEM]: "bg-yellow-100 text-yellow-800",
+  [ExperienceCategory.HOSPEDAGEM_CASA]: "bg-amber-100 text-amber-800",
   [ExperienceCategory.LABORATORIO]: "bg-purple-100 text-purple-800",
 } as Record<string | number, string>;
 
@@ -24,6 +27,7 @@ export enum ExperienceCategoryCard {
   TRAIL = "TRAIL",
   EVENT = "EVENT",
   ROOM = "ROOM",
+  HOUSE = "HOUSE",
   LAB = "LAB",
 }
 
@@ -125,6 +129,7 @@ const CATEGORY_CARD_MAP: Record<ExperienceCategory, ExperienceCategoryCard> = {
   [ExperienceCategory.TRILHA]: ExperienceCategoryCard.TRAIL,
   [ExperienceCategory.EVENTO]: ExperienceCategoryCard.EVENT,
   [ExperienceCategory.HOSPEDAGEM]: ExperienceCategoryCard.ROOM,
+  [ExperienceCategory.HOSPEDAGEM_CASA]: ExperienceCategoryCard.HOUSE,
   [ExperienceCategory.LABORATORIO]: ExperienceCategoryCard.LAB,
 };
 
@@ -132,15 +137,33 @@ const CATEGORY_CARD_REVERSE_MAP: Record<ExperienceCategoryCard, ExperienceCatego
   [ExperienceCategoryCard.TRAIL]: ExperienceCategory.TRILHA,
   [ExperienceCategoryCard.EVENT]: ExperienceCategory.EVENTO,
   [ExperienceCategoryCard.ROOM]: ExperienceCategory.HOSPEDAGEM,
+  [ExperienceCategoryCard.HOUSE]: ExperienceCategory.HOSPEDAGEM_CASA,
   [ExperienceCategoryCard.LAB]: ExperienceCategory.LABORATORIO,
 };
 
 export const EXPERIENCE_CATEGORY_FORM_LABEL: Record<ExperienceCategory, string> = {
   [ExperienceCategory.LABORATORIO]: "Laboratório",
   [ExperienceCategory.TRILHA]: "Trilha",
-  [ExperienceCategory.HOSPEDAGEM]: "Hospedagem",
+  [ExperienceCategory.HOSPEDAGEM]: "Hospedagem quarto",
+  [ExperienceCategory.HOSPEDAGEM_CASA]: "Hospedagem casa",
   [ExperienceCategory.EVENTO]: "Evento",
 };
+
+export function isHouseHosting(
+  category: string | ExperienceCategory | ExperienceCategoryCard | null | undefined,
+): boolean {
+  if (!category) {
+    return false;
+  }
+
+  const value = String(category).trim().toUpperCase();
+
+  return (
+    value === ExperienceCategory.HOSPEDAGEM_CASA ||
+    value === ExperienceCategoryCard.HOUSE ||
+    value === "CASA"
+  );
+}
 
 export function toExperienceCategory(
   category: string | ExperienceCategory | ExperienceCategoryCard | null | undefined,

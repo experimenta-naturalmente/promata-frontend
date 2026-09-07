@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import type { Person } from "@/types/person";
 import { useAddPeopleMyReservations, useCancelReservation, useMyReservations } from "@/hooks";
 import type { ReservationGroupStatusFilter } from "@/hooks/reservations/useMyReservations";
+import { estimatedGroupTotal } from "@/utils/reservationEstimatedTotal";
 
 export const Route = createFileRoute("/(index)/user/my-reservations/")({
   component: RouteComponent,
@@ -75,7 +76,7 @@ function RouteComponent() {
               id={rg.id}
               history={rg.history}
               title={"Pacote personalizado"}
-              price={+rg.price}
+              price={estimatedGroupTotal(rg.reservations)}
               period={{
                 startDate: new Date(rg.startDate),
                 endDate: new Date(rg.endDate),

@@ -59,6 +59,22 @@ describe("CartItem", () => {
     expect(screen.getByText("Quarto")).toBeInTheDocument();
   });
 
+  it("renders house hosting as Casa", () => {
+    renderWithProviders(
+      <CartItem
+        experience={makeExperience({
+          category: ExperienceCategoryCard.HOUSE,
+          price: 250,
+          priceMax: 250,
+        })}
+      />,
+    );
+
+    expect(screen.getByText("Casa")).toBeInTheDocument();
+    expect(screen.getByText(/R\$(?:\u00A0|\s)?250,00/)).toBeInTheDocument();
+    expect(screen.queryByText(/R\$(?:\u00A0|\s)?250,00\s?-\s?R\$(?:\u00A0|\s)?250,00/)).not.toBeInTheDocument();
+  });
+
   it("falls back to zero capacity when no value provided", () => {
     renderWithProviders(
       <CartItem

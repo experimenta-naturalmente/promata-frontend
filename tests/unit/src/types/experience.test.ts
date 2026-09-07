@@ -178,6 +178,24 @@ describe("mapExperienceApiResponseToDTO", () => {
     expect(dto.category).toBe("ROOM");
   });
 
+  it("maps house hosting category to HOUSE", async () => {
+    vi.doMock("@/utils/resolveImageUrl", () => ({
+      resolveImageUrl: (raw: string) => `cdn/${raw}`,
+    }));
+
+    const { mapExperienceApiResponseToDTO } = await import("@/types/experience");
+
+    const dto = mapExperienceApiResponseToDTO({
+      id: "house-1",
+      name: "Chalé",
+      category: "HOSTING_HOUSE",
+      capacity: 8,
+      price: 400,
+    } as unknown as ExperienceApiResponse);
+
+    expect(dto.category).toBe("HOUSE");
+  });
+
   it("defaults active to null when neither status field is provided", async () => {
     vi.doMock("@/utils/resolveImageUrl", () => ({
       resolveImageUrl: (raw: string) => raw,
@@ -261,6 +279,7 @@ describe("toExperienceCategory", () => {
     );
 
     expect(toExperienceCategory("HOSTING")).toBe(ExperienceCategory.HOSPEDAGEM);
+    expect(toExperienceCategory("HOSTING_HOUSE")).toBe(ExperienceCategory.HOSPEDAGEM_CASA);
     expect(toExperienceCategory("LABORATORY")).toBe(ExperienceCategory.LABORATORIO);
     expect(toExperienceCategory("TRAIL")).toBe(ExperienceCategory.TRILHA);
     expect(toExperienceCategory("EVENT")).toBe(ExperienceCategory.EVENTO);
@@ -272,6 +291,9 @@ describe("toExperienceCategory", () => {
 
     expect(toExperienceCategory(ExperienceCategoryCard.ROOM)).toBe(
       ExperienceCategory.HOSPEDAGEM,
+    );
+    expect(toExperienceCategory(ExperienceCategoryCard.HOUSE)).toBe(
+      ExperienceCategory.HOSPEDAGEM_CASA,
     );
     expect(toExperienceCategory(ExperienceCategoryCard.LAB)).toBe(
       ExperienceCategory.LABORATORIO,
@@ -292,5 +314,19 @@ describe("toExperienceCategory", () => {
     expect(toExperienceCategory(undefined)).toBe(ExperienceCategory.LABORATORIO);
     expect(toExperienceCategory(null)).toBe(ExperienceCategory.LABORATORIO);
     expect(toExperienceCategory("UNKNOWN")).toBe(ExperienceCategory.LABORATORIO);
+  });
+});
+
+describe("isHouseHosting", () => {
+  it("identifies house hosting categories", async () => {
+    const { ExperienceCategory, ExperienceCategoryCard, isHouseHosting } = await import(
+      "@/types/experience"
+    );
+
+    expect(isHouseHosting(ExperienceCategory.HOSPEDAGEM_CASA)).toBe(true);
+    expect(isHouseHosting(ExperienceCategoryCard.HOUSE)).toBe(true);
+    expect(isHouseHosting("HOSTING_HOUSE")).toBe(true);
+    expect(isHouseHosting(ExperienceCategory.HOSPEDAGEM)).toBe(false);
+    expect(isHouseHosting(ExperienceCategoryCard.ROOM)).toBe(false);
   });
 });

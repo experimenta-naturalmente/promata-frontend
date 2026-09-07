@@ -25,6 +25,8 @@
     "trail": "Trilha",
     "labs": "Laboratórios",
     "rooms": "Quartos",
+    "house": "Casa",
+    "houses": "Casas",
     "events": "Eventos",
     "trails": "Trilhas",
     "experience": "Experiência",
@@ -173,6 +175,7 @@
     "departureDatePlaceholder": "Saída",
     "experienceTypes": {
       "rooms": "Quartos",
+      "houses": "Casas",
       "events": "Eventos",
       "labs": "Laboratórios",
       "trails": "Trilhas"
@@ -222,7 +225,8 @@
 
   "experienceCategories": {
     "lab": "Laboratório",
-    "room": "Hospedagem",
+    "room": "Quarto",
+    "house": "Casa",
     "event": "Evento",
     "trail": "Trilha"
   },
@@ -594,6 +598,7 @@
     "event": "Evento",
     "trail": "Trilha",
     "hosting": "Quarto",
+    "house": "Casa",
     "laboratory": "Laboratório"
   },
   "requests": {

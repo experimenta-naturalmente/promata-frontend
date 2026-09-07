@@ -11,6 +11,10 @@ const experienceTypeOptions: FilterOption[] = [
     labelKey: "reserveFilter.experienceTypes.rooms",
   },
   {
+    value: ExperienceCategory.HOSPEDAGEM_CASA,
+    labelKey: "reserveFilter.experienceTypes.houses",
+  },
+  {
     value: ExperienceCategory.EVENTO,
     labelKey: "reserveFilter.experienceTypes.events",
   },

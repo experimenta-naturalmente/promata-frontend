@@ -45,6 +45,7 @@ interface ExperienceImage {
 
 interface Experience {
   name: string;
+  category?: string;
   startDate: string; // ISO date string
   endDate: string; // ISO date string
   price: string;
@@ -59,6 +60,7 @@ export interface Reservation {
   startDate: string; // ISO date string
   endDate: string; // ISO date string
   notes: string;
+  membersCount: number;
   user: User;
   experience: Experience;
 }

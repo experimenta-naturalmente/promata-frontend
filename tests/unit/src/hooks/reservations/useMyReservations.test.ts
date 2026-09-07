@@ -104,6 +104,7 @@ runDescribe("useMyReservations", () => {
       startDate: "2024-01-01",
       endDate: "2024-01-02",
       notes: "",
+      membersCount: 2,
       user: {
         name: "John",
         phone: "123",

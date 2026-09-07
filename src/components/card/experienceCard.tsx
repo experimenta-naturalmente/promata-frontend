@@ -8,7 +8,7 @@ import { type ComponentType, useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useLoadImage } from "@/hooks/shared/useLoadImage";
-import { type Experience, ExperienceCategoryCard } from "@/types/experience";
+import { type Experience, ExperienceCategoryCard, isHouseHosting } from "@/types/experience";
 import { translateExperienceCategory } from "@/utils/translateExperienceCategory";
 import { MarkdownContent } from "@/components/text-areas";
 
@@ -66,6 +66,8 @@ export function CardExperience({ experience }: CardExperienceProps) {
   const categoryFallbackMap: Record<string, string> = {
     [ExperienceCategoryCard.TRAIL]: i18n.language?.startsWith("pt") ? "Trilhas" : "Trails",
     [ExperienceCategoryCard.EVENT]: i18n.language?.startsWith("pt") ? "Eventos" : "Events",
+    [ExperienceCategoryCard.ROOM]: i18n.language?.startsWith("pt") ? "Quarto" : "Room",
+    [ExperienceCategoryCard.HOUSE]: i18n.language?.startsWith("pt") ? "Casa" : "House",
   };
 
   const categoryLabel =
@@ -176,11 +178,15 @@ export function CardExperience({ experience }: CardExperienceProps) {
     experience.priceMax == null
       ? price == null
         ? null
-        : price * maxCapacity
+        : isHouseHosting(experience.category)
+          ? price
+          : price * maxCapacity
       : Number(experience.priceMax);
   const priceLabel =
     price != null && Number.isFinite(price) && priceMax != null && Number.isFinite(priceMax)
-      ? `${currencyFormatter.format(price)} - ${currencyFormatter.format(priceMax)}`
+      ? isHouseHosting(experience.category) || price === priceMax
+        ? currencyFormatter.format(price)
+        : `${currencyFormatter.format(price)} - ${currencyFormatter.format(priceMax)}`
       : "-";
 
   const detailLabels: Array<{

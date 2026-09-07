@@ -19,7 +19,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { ExperienceCategory } from "@/types/experience";
+import {
+  EXPERIENCE_CATEGORY_FORM_LABEL,
+  ExperienceCategory,
+} from "@/types/experience";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
@@ -30,6 +33,7 @@ import {
   Calendar,
   CalendarIcon,
   FlaskConical,
+  Home,
   ImagePlus,
   Mountain,
   Upload,
@@ -138,6 +142,8 @@ const getCategoryIcon = (category: ExperienceCategory) => {
       return <Mountain className="h-4 w-4" />;
     case ExperienceCategory.HOSPEDAGEM:
       return <Bed className="h-4 w-4" />;
+    case ExperienceCategory.HOSPEDAGEM_CASA:
+      return <Home className="h-4 w-4" />;
     case ExperienceCategory.EVENTO:
       return <Calendar className="h-4 w-4" />;
     default:
@@ -522,40 +528,21 @@ export function CreateExperience() {
                             <div className="flex items-center gap-2">
                               {getCategoryIcon(field.value)}
                               <Typography>
-                                {field.value === ExperienceCategory.LABORATORIO && "Laboratório"}
-                                {field.value === ExperienceCategory.TRILHA && "Trilha"}
-                                {field.value === ExperienceCategory.HOSPEDAGEM && "Hospedagem"}
-                                {field.value === ExperienceCategory.EVENTO && "Evento"}
+                                {EXPERIENCE_CATEGORY_FORM_LABEL[field.value]}
                               </Typography>
                             </div>
                           )}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={ExperienceCategory.LABORATORIO}>
-                          <div className="flex items-center gap-2">
-                            <FlaskConical className="h-4 w-4" />
-                            Laboratório
-                          </div>
-                        </SelectItem>
-                        <SelectItem value={ExperienceCategory.TRILHA}>
-                          <div className="flex items-center gap-2">
-                            <Mountain className="h-4 w-4" />
-                            Trilha
-                          </div>
-                        </SelectItem>
-                        <SelectItem value={ExperienceCategory.HOSPEDAGEM}>
-                          <div className="flex items-center gap-2">
-                            <Bed className="h-4 w-4" />
-                            Hospedagem
-                          </div>
-                        </SelectItem>
-                        <SelectItem value={ExperienceCategory.EVENTO}>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            Evento
-                          </div>
-                        </SelectItem>
+                        {Object.values(ExperienceCategory).map((category) => (
+                          <SelectItem key={category} value={category}>
+                            <div className="flex items-center gap-2">
+                              {getCategoryIcon(category)}
+                              {EXPERIENCE_CATEGORY_FORM_LABEL[category]}
+                            </div>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
