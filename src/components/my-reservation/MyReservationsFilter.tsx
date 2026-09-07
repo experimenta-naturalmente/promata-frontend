@@ -5,11 +5,7 @@ import { ExperienceCategory } from '@/types/experience';
 const experienceTypeOptions: FilterOption[] = [
   {
     value: ExperienceCategory.HOSPEDAGEM,
-    labelKey: 'reserveFilter.experienceTypes.rooms',
-  },
-  {
-    value: ExperienceCategory.HOSPEDAGEM_CASA,
-    labelKey: 'reserveFilter.experienceTypes.houses',
+    labelKey: 'reserveFilter.experienceTypes.hosting',
   },
   {
     value: ExperienceCategory.EVENTO,

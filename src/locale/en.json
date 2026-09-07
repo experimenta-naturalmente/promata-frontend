@@ -183,6 +183,7 @@
     "departureDateLabel": "Check-out date",
     "departureDatePlaceholder": "Check-out",
     "experienceTypes": {
+      "hosting": "Hosting",
       "rooms": "Rooms",
       "houses": "Houses",
       "events": "Events",
