@@ -6,6 +6,8 @@ interface UseExperienceTuningOptions {
   experienceId?: string;
   persist?: boolean;
   initialData?: ExperienceTuningData | null;
+  defaultMen?: number;
+  defaultWomen?: number;
   onLoad?: (data: ExperienceTuningData) => void;
   onSave?: (data: ExperienceTuningData) => void;
 }
@@ -19,6 +21,8 @@ const toSafeNumber = (value: number | string | null | undefined): number => {
 
   return numeric;
 };
+
+const toCountString = (value: number): string => (value > 0 ? String(value) : "");
 
 const toDateOrNull = (value: string | Date | null | undefined): Date | null => {
   if (!value) return null;
@@ -42,19 +46,29 @@ export function useExperienceTuning({
   experienceId,
   persist = true,
   initialData,
+  defaultMen = 0,
+  defaultWomen = 0,
   onLoad,
   onSave,
 }: UseExperienceTuningOptions) {
   const [range, setRange] = useState<DateRange>({ from: undefined, to: undefined });
-  const [men, setMen] = useState<string>("");
-  const [women, setWomen] = useState<string>("");
+  const [men, setMen] = useState<string>(() => toCountString(toSafeNumber(defaultMen)));
+  const [women, setWomen] = useState<string>(() => toCountString(toSafeNumber(defaultWomen)));
   const [saved, setSaved] = useState(false);
   const [savedRange, setSavedRange] = useState<DateRange | undefined>();
-  const [savedMen, setSavedMen] = useState(0);
-  const [savedWomen, setSavedWomen] = useState(0);
+  const [savedMen, setSavedMen] = useState(() => toSafeNumber(defaultMen));
+  const [savedWomen, setSavedWomen] = useState(() => toSafeNumber(defaultWomen));
 
   const storageKey = experienceId && persist ? `experience_tuning_${experienceId}` : undefined;
   const previousInitialRef = useRef<ExperienceTuningData | null>(null);
+  const isFirstDefaultsSync = useRef(true);
+  const savedRef = useRef(saved);
+  const previousDefaultsRef = useRef({
+    men: toSafeNumber(defaultMen),
+    women: toSafeNumber(defaultWomen),
+  });
+
+  savedRef.current = saved;
 
   const applyData = useCallback(
     (data: ExperienceTuningData | null | undefined, markSaved: boolean) => {
@@ -67,8 +81,8 @@ export function useExperienceTuning({
         return;
       }
 
-      const menValue = toSafeNumber(data.men);
-      const womenValue = toSafeNumber(data.women);
+      const menValue = Math.max(toSafeNumber(data.men), toSafeNumber(defaultMen));
+      const womenValue = Math.max(toSafeNumber(data.women), toSafeNumber(defaultWomen));
 
       const normalizedRange: DateRange = { from: fromDate, to: toDate };
 
@@ -80,17 +94,20 @@ export function useExperienceTuning({
       setSavedWomen(womenValue);
       setSaved(markSaved);
     },
-    []
+    [defaultMen, defaultWomen]
   );
 
   const reset = useCallback(() => {
+    const menValue = toSafeNumber(defaultMen);
+    const womenValue = toSafeNumber(defaultWomen);
+
     setRange({ from: undefined, to: undefined });
-    setMen("");
-    setWomen("");
+    setMen(toCountString(menValue));
+    setWomen(toCountString(womenValue));
     setSaved(false);
     setSavedRange(undefined);
-    setSavedMen(0);
-    setSavedWomen(0);
+    setSavedMen(menValue);
+    setSavedWomen(womenValue);
 
     if (storageKey) {
       try {
@@ -99,7 +116,7 @@ export function useExperienceTuning({
         /* noop: storage may be unavailable */
       }
     }
-  }, [storageKey]);
+  }, [defaultMen, defaultWomen, storageKey]);
 
   const load = useCallback(() => {
     if (!storageKey) return;
@@ -132,6 +149,45 @@ export function useExperienceTuning({
       previousInitialRef.current = null;
     }
   }, [initialData, applyData, reset]);
+
+  useEffect(() => {
+    const nextMen = toSafeNumber(defaultMen);
+    const nextWomen = toSafeNumber(defaultWomen);
+
+    if (isFirstDefaultsSync.current) {
+      isFirstDefaultsSync.current = false;
+      previousDefaultsRef.current = { men: nextMen, women: nextWomen };
+      return;
+    }
+
+    const previousDefaults = previousDefaultsRef.current;
+
+    setMen((current) => {
+      const currentNumber = current === "" ? 0 : toSafeNumber(current);
+
+      if (currentNumber === previousDefaults.men || currentNumber < nextMen) {
+        return toCountString(nextMen);
+      }
+
+      return current;
+    });
+    setWomen((current) => {
+      const currentNumber = current === "" ? 0 : toSafeNumber(current);
+
+      if (currentNumber === previousDefaults.women || currentNumber < nextWomen) {
+        return toCountString(nextWomen);
+      }
+
+      return current;
+    });
+
+    previousDefaultsRef.current = { men: nextMen, women: nextWomen };
+
+    if (!savedRef.current) {
+      setSavedMen(nextMen);
+      setSavedWomen(nextWomen);
+    }
+  }, [defaultMen, defaultWomen]);
 
   const save = useCallback(() => {
     if (!range.from || !range.to) return;

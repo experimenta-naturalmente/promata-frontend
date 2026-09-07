@@ -27,6 +27,8 @@ type ExperienceCardProps = {
   onSave?: (data: ExperienceTuningData) => void;
   onLoad?: (data: ExperienceTuningData) => void;
   initialData?: ExperienceTuningData | null;
+  defaultMen?: number;
+  defaultWomen?: number;
 };
 
 export default function ExperienceCard({
@@ -40,6 +42,8 @@ export default function ExperienceCard({
   onSave,
   onLoad,
   initialData,
+  defaultMen = 0,
+  defaultWomen = 0,
 }: ExperienceCardProps) {
   const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -60,6 +64,8 @@ export default function ExperienceCard({
     experienceId,
     persist,
     initialData,
+    defaultMen,
+    defaultWomen,
     onSave,
     onLoad,
   });
@@ -137,8 +143,8 @@ export default function ExperienceCard({
           setRange({ from: undefined, to: undefined });
         }
         // Revert people counts
-        setMen(savedMen.toString());
-        setWomen(savedWomen.toString());
+        setMen(savedMen > 0 ? savedMen.toString() : "");
+        setWomen(savedWomen > 0 ? savedWomen.toString() : "");
       }
 
       return !prev;

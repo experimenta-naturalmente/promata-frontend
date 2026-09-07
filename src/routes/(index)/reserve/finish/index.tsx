@@ -216,11 +216,11 @@ function ReserveFlow() {
           return acc;
         }
 
-        const gender = (person.gender ?? "").toUpperCase();
+        const gender = (person.gender ?? "").trim().toLowerCase();
 
-        if (gender === "Feminino") {
+        if (gender === "feminino") {
           acc.female += 1;
-        } else if (["Masculino", "Outro", "NOT_INFORMED"].includes(gender)) {
+        } else if (gender === "masculino" || gender === "outro" || gender === "not_informed") {
           acc.male += 1;
         }
 
@@ -681,6 +681,8 @@ function ReserveFlow() {
           onChange={setExperienceAdjustments}
           value={experienceAdjustments}
           experiences={normalizedCartExperiences}
+          defaultMen={participantGenderStats.male}
+          defaultWomen={participantGenderStats.female}
         />
       )}
     </ReserveStepLayout>

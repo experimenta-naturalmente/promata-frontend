@@ -11,6 +11,8 @@ type ExperienceAdjustmentsStepProps = {
   value?: ExperienceTuningData[];
   onChange?: (adjustments: ExperienceTuningData[]) => void;
   experiences?: NormalizedExperienceAdjustment[] | null;
+  defaultMen?: number;
+  defaultWomen?: number;
 };
 
 export function ExperienceAdjustmentsStep({
@@ -18,6 +20,8 @@ export function ExperienceAdjustmentsStep({
   value,
   onChange,
   experiences,
+  defaultMen = 0,
+  defaultWomen = 0,
 }: ExperienceAdjustmentsStepProps) {
   const { t } = useTranslation();
   const resolvedInstructions =
@@ -42,6 +46,8 @@ export function ExperienceAdjustmentsStep({
             onChange={onChange}
             value={value}
             experiences={experiences}
+            defaultMen={defaultMen}
+            defaultWomen={defaultWomen}
           />
         </section>
       </div>

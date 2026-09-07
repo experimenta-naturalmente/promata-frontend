@@ -501,4 +501,164 @@ describe("useExperienceTuning", () => {
 
     expect(result.current.saved).toBe(false);
   });
+
+  it("pre-fills men and women from defaultMen and defaultWomen", () => {
+    const { result } = renderUseExperienceTuning({
+      experienceId: "e1",
+      persist: false,
+      defaultMen: 2,
+      defaultWomen: 3,
+    });
+
+    expect(result.current.men).toBe("2");
+    expect(result.current.women).toBe("3");
+    expect(result.current.savedMen).toBe(2);
+    expect(result.current.savedWomen).toBe(3);
+    expect(result.current.saved).toBe(false);
+  });
+
+  it("keeps people fields empty when default counts are zero", () => {
+    const { result } = renderUseExperienceTuning({
+      experienceId: "e1",
+      persist: false,
+      defaultMen: 0,
+      defaultWomen: 0,
+    });
+
+    expect(result.current.men).toBe("");
+    expect(result.current.women).toBe("");
+  });
+
+  it("updates unsaved people counts when defaults increase", () => {
+    const { result, rerender } = renderUseExperienceTuning({
+      experienceId: "e1",
+      persist: false,
+      defaultMen: 1,
+      defaultWomen: 1,
+    });
+
+    expect(result.current.men).toBe("1");
+    expect(result.current.women).toBe("1");
+
+    act(() => {
+      rerender({
+        experienceId: "e1",
+        persist: false,
+        defaultMen: 3,
+        defaultWomen: 2,
+      });
+    });
+
+    expect(result.current.men).toBe("3");
+    expect(result.current.women).toBe("2");
+    expect(result.current.savedMen).toBe(3);
+    expect(result.current.savedWomen).toBe(2);
+  });
+
+  it("does not reduce a higher custom count when defaults change", () => {
+    const { result, rerender } = renderUseExperienceTuning({
+      experienceId: "e1",
+      persist: false,
+      defaultMen: 1,
+      defaultWomen: 1,
+    });
+
+    act(() => {
+      result.current.setMen("5");
+      result.current.setWomen("4");
+    });
+
+    act(() => {
+      rerender({
+        experienceId: "e1",
+        persist: false,
+        defaultMen: 2,
+        defaultWomen: 2,
+      });
+    });
+
+    expect(result.current.men).toBe("5");
+    expect(result.current.women).toBe("4");
+  });
+
+  it("restores participant defaults on reset", () => {
+    const { result } = renderUseExperienceTuning({
+      experienceId: "e1",
+      persist: false,
+      defaultMen: 2,
+      defaultWomen: 1,
+    });
+
+    act(() => {
+      result.current.setMen("9");
+      result.current.setWomen("8");
+      result.current.setRange({
+        from: new Date(2022, 1, 1),
+        to: new Date(2022, 1, 2),
+      });
+    });
+
+    act(() => {
+      result.current.save();
+    });
+
+    expect(result.current.saved).toBe(true);
+
+    act(() => {
+      result.current.reset();
+    });
+
+    expect(result.current.saved).toBe(false);
+    expect(result.current.men).toBe("2");
+    expect(result.current.women).toBe("1");
+    expect(result.current.savedMen).toBe(2);
+    expect(result.current.savedWomen).toBe(1);
+  });
+
+  it("keeps saved initialData instead of replacing it with lower defaults", () => {
+    const initial = {
+      experienceId: "e1",
+      men: 6,
+      women: 4,
+      from: new Date(2024, 0, 1).toISOString(),
+      to: new Date(2024, 0, 2).toISOString(),
+      savedAt: new Date().toISOString(),
+    } as ExperienceTuningData;
+
+    const { result } = renderUseExperienceTuning({
+      experienceId: "e1",
+      persist: false,
+      defaultMen: 2,
+      defaultWomen: 1,
+      initialData: initial,
+    });
+
+    expect(result.current.men).toBe("6");
+    expect(result.current.women).toBe("4");
+    expect(result.current.saved).toBe(true);
+  });
+
+  it("raises saved people counts to at least the participant defaults", () => {
+    const initial = {
+      experienceId: "e1",
+      men: 1,
+      women: 0,
+      from: new Date(2024, 0, 1).toISOString(),
+      to: new Date(2024, 0, 2).toISOString(),
+      savedAt: new Date().toISOString(),
+    } as ExperienceTuningData;
+
+    const { result } = renderUseExperienceTuning({
+      experienceId: "e1",
+      persist: false,
+      defaultMen: 2,
+      defaultWomen: 3,
+      initialData: initial,
+    });
+
+    expect(result.current.men).toBe("2");
+    expect(result.current.women).toBe("3");
+    expect(result.current.savedMen).toBe(2);
+    expect(result.current.savedWomen).toBe(3);
+  });
 });

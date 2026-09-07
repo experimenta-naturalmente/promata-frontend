@@ -14,6 +14,8 @@ type ExperienceAdjustmentsCardProps = {
   value?: ExperienceTuningData[];
   onChange?: (adjustments: ExperienceTuningData[]) => void;
   experiences?: NormalizedExperienceAdjustment[] | null;
+  defaultMen?: number;
+  defaultWomen?: number;
 };
 
 function ExperienceAdjustmentsCard({
@@ -21,6 +23,8 @@ function ExperienceAdjustmentsCard({
   value,
   onChange,
   experiences: externalExperiences,
+  defaultMen = 0,
+  defaultWomen = 0,
 }: ExperienceAdjustmentsCardProps) {
   const { t } = useTranslation();
   const hasExternalSource = Array.isArray(externalExperiences);
@@ -172,6 +176,8 @@ function ExperienceAdjustmentsCard({
             imageUrl={exp.imageUrl}
             experienceId={exp.experienceId}
             persist={false}
+            defaultMen={defaultMen}
+            defaultWomen={defaultWomen}
             initialData={
               exp.experienceId
                 ? (adjustments.find((item) => item.experienceId === exp.experienceId) ?? null)
